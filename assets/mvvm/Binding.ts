@@ -16,7 +16,7 @@ const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /** 组件检测数组 */
 const COMP_ARRAY_CHECK = [
-    // ['绑定组件名','绑定属性名']
+  //['绑定组件名','绑定属性名']
     ['cc.Label', 'string'],
     ['cc.RichText', 'string'],
     ['cc.EditBox', 'string'],
@@ -25,7 +25,7 @@ const COMP_ARRAY_CHECK = [
     ['cc.Slider', 'progress'],
     ['cc.ProgressBar', 'progress'],
     ['cc.PageView', 'CurrentPageIndex'],
-    ['cc.Sprite', 'Sprite Frame'],
+    ['cc.Sprite', 'SpriteFrame'],
     ['cc.ToggleContainer', 'CheckedIndex'], // 仅支持 allowSwitchOff = false
 ];
 
