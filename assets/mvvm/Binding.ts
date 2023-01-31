@@ -43,6 +43,7 @@ enum BindingMode {
 
 /** 数据绑定组件 */
 @ccclass('brief.Binding')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/mvvm-mvvm-kuang-jia/binding')
 @executeInEditMode
 @menu('Brief/MVVM/Binding')
 export class Binding extends Component {

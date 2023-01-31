@@ -16,6 +16,7 @@ const { ccclass, help, executeInEditMode, menu, property } = _decorator;
  * 数据上下文组件基类
  */
 @ccclass('brief.DataContext')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/mvvm-mvvm-kuang-jia/datacontext')
 @executeInEditMode
 @menu('Brief/MVVM/DataContext')
 export class DataContext extends Component {

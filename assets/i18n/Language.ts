@@ -11,6 +11,7 @@ const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /** 多语言管理 */
 @ccclass('brief.Language')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/i18n-duo-yu-yan-guan-li/language')
 @executeInEditMode
 @menu('Brief/I18n/Language')
 export class Language extends Component {

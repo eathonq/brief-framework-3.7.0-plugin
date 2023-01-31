@@ -46,7 +46,7 @@ export enum ViewState {
 
 /** 视图基类 */
 @ccclass('brief.ViewBase')
-@help('i18n:help.ViewBase')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/ui-zu-jian-yu-kuo-zhan/viewbase')
 @executeInEditMode
 @menu('Brief/UI/ViewBase')
 export class ViewBase extends Component {

@@ -274,6 +274,7 @@ class ScrollListViewItemManager {
 
 /** 滚动视图列表管理 */
 @ccclass('brief.ScrollListView')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/ui-zu-jian-yu-kuo-zhan/scrolllistview')
 @executeInEditMode
 @menu('Brief/UI/ScrollListView')
 export class ScrollListView extends Component {

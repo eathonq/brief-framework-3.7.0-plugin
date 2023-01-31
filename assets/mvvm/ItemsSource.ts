@@ -16,6 +16,7 @@ const { ccclass, help, executeInEditMode, menu, property } = _decorator;
  * 数据集合绑定组件
  */
 @ccclass('brief.ItemsSource')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/mvvm-mvvm-kuang-jia/itemssource')
 @executeInEditMode
 @menu('Brief/MVVM/ItemsSource')
 export class ItemsSource extends DataContext {

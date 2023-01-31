@@ -33,6 +33,7 @@ const LOCAL_GUIDE_KEY = "local_guide";
 
 /** 引导管理 */
 @ccclass('brief.GuideManager')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/guide-yin-dao-guan-li/guidemanager')
 @executeInEditMode
 @menu('Brief/Guide/GuideManager')
 export class GuideManager extends Component {

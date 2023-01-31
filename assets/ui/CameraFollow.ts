@@ -10,6 +10,7 @@ const { ccclass, help, menu, property } = _decorator;
 
 /** 摄像机跟随组件（如果手动挂载，需要挂载在Camera上面） */
 @ccclass('brief.CameraFollow')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/ui-zu-jian-yu-kuo-zhan/camerafollow')
 @menu('Brief/UI/CameraFollow')
 export class CameraFollow extends Component {
     //#region instance

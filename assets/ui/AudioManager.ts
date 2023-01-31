@@ -34,6 +34,7 @@ class SoundAudioSource {
 
 /** 音频管理器 */
 @ccclass('brief.AudioManager')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/ui-zu-jian-yu-kuo-zhan/audiomanager')
 @executeInEditMode
 @menu('Brief/UI/AudioManager')
 export class AudioManager extends Component {

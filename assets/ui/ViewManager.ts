@@ -236,6 +236,7 @@ class ViewStack {
 
 /** 视图管理 */
 @ccclass('brief.ViewManager')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/ui-zu-jian-yu-kuo-zhan/viewmanager')
 @executeInEditMode
 @menu('Brief/UI/ViewManager')
 export class ViewManager extends Component {

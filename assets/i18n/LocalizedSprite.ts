@@ -15,6 +15,7 @@ const { ccclass, help, executeInEditMode, menu, property } = _decorator;
  * i18n 本地化图片(支持Sprite)
  */
 @ccclass('brief.LocalizedSprite')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/i18n-duo-yu-yan-guan-li/localizedsprite')
 @executeInEditMode
 @menu('Brief/I18n/LocalizedSprite')
 export class LocalizedSprite extends Component {

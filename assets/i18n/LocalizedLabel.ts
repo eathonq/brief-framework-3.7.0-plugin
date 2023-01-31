@@ -23,6 +23,7 @@ const COMP_ARRAY_CHECK = [
  * i18n 本地化文本(支持Label,RichText,EditBox)
  */
 @ccclass('brief.LocalizedLabel')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/i18n-duo-yu-yan-guan-li/localizedlabel')
 @executeInEditMode
 @menu('Brief/I18n/LocalizedLabel')
 export class LocalizedLabel extends Component {

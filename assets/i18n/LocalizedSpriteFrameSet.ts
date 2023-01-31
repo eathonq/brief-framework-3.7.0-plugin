@@ -23,6 +23,7 @@ class LocalizedSpriteFrameSetInfo {
 }
 
 @ccclass('brief.LocalizedSpriteFrameSet')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/i18n-duo-yu-yan-guan-li/localizedspriteframeset')
 @executeInEditMode
 @menu('Brief/I18n/LocalizedSpriteFrameSet')
 export class LocalizedSpriteFrameSet extends Component {

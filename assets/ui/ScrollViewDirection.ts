@@ -10,6 +10,7 @@ import { ScrollListView, ScrollViewDirectionType } from './ScrollListView';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 @ccclass('brief.ScrollViewDirection')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/ui-zu-jian-yu-kuo-zhan/scrollviewdirection')
 @executeInEditMode
 @menu('Brief/UI/ScrollViewDirection')
 export class ScrollViewDirection extends Component {
