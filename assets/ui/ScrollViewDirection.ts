@@ -5,8 +5,15 @@
  * update = 2023-01-30 16:14
  */
 
+/** ScrollView方向类型 */
+export enum ScrollViewDirectionType {
+    /** 水平方向 */
+    HORIZONTAL = 0,
+    /** 垂直方向 */
+    VERTICAL = 1,
+}
+
 import { _decorator, Component, Node, Enum, ScrollView, UITransform, Widget, ScrollBar } from 'cc';
-import { ScrollListView, ScrollViewDirectionType } from './ScrollListView';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 @ccclass('brief.ScrollViewDirection')
@@ -192,8 +199,6 @@ export class ScrollViewDirection extends Component {
         if (this.content.children.length > 0) {
             this.autoAdjustItemPosition(this.content, this.content.children);
         }
-
-        this.autoAdjustScrollListDirection();
     }
 
     private autoAdjustItemPosition(content: Node, items: readonly Node[]) {
@@ -216,13 +221,6 @@ export class ScrollViewDirection extends Component {
                 leftX = itemTransform.width;
                 item.setPosition(itemX, 0 + (itemTransform.anchorY - 0.5) * itemTransform.height);
             }
-        }
-    }
-
-    private autoAdjustScrollListDirection() {
-        let listView = this.node.getComponent(ScrollListView);
-        if (listView) {
-            listView.direction = this.type;
         }
     }
 }

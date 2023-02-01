@@ -68,6 +68,7 @@ export class LocalizedLabel extends Component {
         this.resetValue();
     }
 
+    //#region EDITOR
     private checkEditorComponent() {
         if (EDITOR) {
             let checkArray = COMP_ARRAY_CHECK;
@@ -80,6 +81,7 @@ export class LocalizedLabel extends Component {
             }
         }
     }
+    //#endregion
 
     /**
          * 重置地址
