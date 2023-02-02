@@ -38,7 +38,7 @@ export class Locator {
      * let node = await Locator.locateNode(this.node, 'Content/Label'); // 等价于 this.node.getChildByName('Content').getChildByName('Label')
      * let node = await Locator.locateNode(this.node, 'Content>Label2'); // 等价于 this.node.getChildByName('Content').getChildByName('Item').getChildByName('Label2')
      */
-    static async locateNode(root: Node | any, locator: string): Promise<Node> {
+    static async locateNode(root: Node, locator: string): Promise<Node> {
         if (!this.locating) {
             this.startTime = Date.now();
             this.locating = true;

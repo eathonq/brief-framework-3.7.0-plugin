@@ -323,6 +323,7 @@ export class ViewManager extends Component {
 
         // 预制体添加到模板表
         for (let viewPrefab of this.viewList) {
+            if (!viewPrefab) continue;
             let viewBase: ViewBase = viewPrefab.data.getComponent(ViewBase);
             if (viewBase) {
                 this.viewTemplateMap.set(viewBase.viewName, { viewBase, node: viewPrefab });

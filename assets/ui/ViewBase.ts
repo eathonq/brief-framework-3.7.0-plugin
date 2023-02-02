@@ -80,8 +80,6 @@ export class ViewBase extends Component {
         this.checkEditorComponent();
     }
 
-    // protected start() { }
-
     private checkEditorComponent(isTitle = false) {
         if (!EDITOR) return;
 
