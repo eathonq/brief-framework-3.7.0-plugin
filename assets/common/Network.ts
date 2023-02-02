@@ -2,7 +2,7 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-01-30 16:14
+ * update = 2023-02-02 17:15
  */
 
 import { sys } from "cc";
@@ -107,10 +107,10 @@ class HttpHelper {
     /**
      * post请求
      * @param url 请求地址
-     * @param data 请求数据
+     * @param data 请求数据, 'a=1&b=2&c=3' 或者 {a:1, b:2, c:3}
      * @param callback 回调函数
      */
-    static post(url: string, data: any, callback: (response: string, errStatus?: number) => void) {
+    static post(url: string, data: string | object, callback: (response: string, errStatus?: number) => void) {
         let xhr = new XMLHttpRequest();
         xhr.open("POST", url, true);
         // https://developer.mozilla.org/zh-CN/docs/Web/HTTP/CORS
@@ -178,10 +178,10 @@ class HttpHelper {
     /**
      * post请求
      * @param url 请求地址
-     * @param data 请求数据
+     * @param data 请求数据, 'a=1&b=2&c=3' 或者 {a:1, b:2, c:3}
      * @returns Promise<{ response: string, errStatus?: number }>
      */
-    static async postAsync(url: string, data: any) {
+    static async postAsync(url: string, data: string | object) {
         return new Promise<{ response: string, errStatus?: number }>((resolve, reject) => {
             this.post(url, data, (response: string, errStatus?: number) => {
                 resolve({ response, errStatus });
