@@ -2,7 +2,7 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-01-30 16:14
+ * update = 2023-02-03 09:55
  */
 
 import { sys } from "cc";
@@ -236,12 +236,13 @@ export const config = Configuration.instance;
  */
 export function SingletonConfig<T>(key?: string) {
     class SingletonT {
+        private __key__ = "";
         protected constructor() {
             if (key) {
-                this._key = key;
+                this.__key__ = key;
             }
             else {
-                this._key = this.constructor.name;
+                this.__key__ = this.constructor.name;
             }
         }
         private static _instance: SingletonT = null;
@@ -249,21 +250,22 @@ export function SingletonConfig<T>(key?: string) {
             if (SingletonT._instance == null) {
                 SingletonT._instance = new this();
 
-                // 加载数据
-                SingletonT._instance.load();
-
                 // 重置所有字段 get set
                 let keys = Object.keys(SingletonT._instance);
-                // 去掉 _key
-                keys.splice(keys.indexOf("_key"), 1);
+                // 去掉 __key__
+                keys.splice(keys.indexOf("__key__"), 1);
+                // 去掉 __isDelayLoad__
+                keys.splice(keys.indexOf("__isDelayLoad__"), 1);
                 for (let i = 0; i < keys.length; i++) {
                     let key = keys[i];
                     let value = SingletonT._instance[key];
                     Object.defineProperty(SingletonT._instance, key, {
                         get: function () {
+                            SingletonT._instance.delayLoad();
                             return value;
                         },
                         set: function (newValue) {
+                            SingletonT._instance.delayLoad();
                             value = newValue;
                             SingletonT._instance.save();
                         },
@@ -275,19 +277,24 @@ export function SingletonConfig<T>(key?: string) {
             return SingletonT._instance as T;
         }
 
-        private _key = "";
+        private __isDelayLoad__ = false;
+        /** 
+         * 延迟加载，只有在访问字段时才会加载数据
+         * 保证在构造函数中不会加载数据
+         */
+        private delayLoad() {
+            if (this.__isDelayLoad__) return;
+            this.__isDelayLoad__ = true;
 
-        private load(): boolean {
-            let data = config.getItem(this._key);
+            // 加载数据
+            let data = config.getItem(this.__key__);
             if (data) {
                 Object.assign(this, JSON.parse(data));
-                return true;
             }
-            return false;
         }
 
         private save(): void {
-            config.setItem(this._key, JSON.stringify(this));
+            config.setItem(this.__key__, JSON.stringify(this));
         }
     }
 
