@@ -2,7 +2,7 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-02-03 09:55
+ * update = 2023-02-03 14:58
  */
 
 import { sys } from "cc";
@@ -223,16 +223,59 @@ export function platformInit(storage: IStorage) {
     PlatformStorage.instance.init(storage);
 }
 
-/** 本地存储 */
+export function mapToObj(map: Map<string, any>): any {
+    let obj = Object.create(null);
+    for (let [k, v] of map) {
+        obj[k] = v;
+    }
+    return obj;
+}
+
+export function objToMap(obj: any): Map<string, any> {
+    let map = new Map();
+    for (let k of Object.keys(obj)) {
+        map.set(k, obj[k]);
+    }
+    return map;
+}
+
+export function objToMapSet(obj: any, map: Map<string, any>) {
+    for (let k of Object.keys(obj)) {
+        map.set(k, obj[k]);
+    }
+}
+
+/** 
+ * 本地存储
+ * @example
+ * config.setItem("key", "str");
+ * config.setItem("key", 0);
+ * config.setItem("key", false);
+ * config.setItem("key", { a: 1, b: 2 });
+ * config.setItem("key", [ "a", "b" ]);
+ * config.setItem("key", new Array<string>());
+ * config.setItem("key", new Map<string, string>()); // 不支持
+ * config.setItem("key", mapToObj(new Map<string, string>())); // 转换成object
+ */
 export const config = Configuration.instance;
 
+const OP = Object.prototype;
+const un_types = ['[object Object]', '[object Array]', '[object Map]'];
 /**
  * 本地存储配置单例模版方法
  * @param key 数据标识, 默认为类名
  * @example
  * class MyConfig extends SingletonConfig<MyConfig>("MyConfig") {
- *     // 自定义字段
+ *     // 自定义数据
+ *     strData: string = "0";
+ *     numData: number = 0;
+ *     booleanData: boolean = false;
+ *     objectData: object = { a: 1, b: 2 }; // 需要手动保存
+ *     arrayData: string[] = [ "a", "b" ]; // 需要手动保存
+ *     listData: Array<string> = new Array<string>(); // 需要手动保存
+ *     mapData: Map<string, string> = new Map<string, string>(); // 不支持
  * }
+ * MyConfig.instance.save(); // 手动保存
  */
 export function SingletonConfig<T>(key?: string) {
     class SingletonT {
@@ -250,29 +293,31 @@ export function SingletonConfig<T>(key?: string) {
             if (SingletonT._instance == null) {
                 SingletonT._instance = new this();
 
-                // 重置所有字段 get set
+                // 仅重写基础类型的 get set
                 let keys = Object.keys(SingletonT._instance);
                 // 去掉 __key__
                 keys.splice(keys.indexOf("__key__"), 1);
                 // 去掉 __isDelayLoad__
                 keys.splice(keys.indexOf("__isDelayLoad__"), 1);
-                for (let i = 0; i < keys.length; i++) {
-                    let key = keys[i];
+                keys.forEach(key => {
                     let value = SingletonT._instance[key];
-                    Object.defineProperty(SingletonT._instance, key, {
-                        get: function () {
-                            SingletonT._instance.delayLoad();
-                            return value;
-                        },
-                        set: function (newValue) {
-                            SingletonT._instance.delayLoad();
-                            value = newValue;
-                            SingletonT._instance.save();
-                        },
-                        enumerable: true,
-                        configurable: true
-                    });
-                }
+                    let type = OP.toString.call(value);
+                    if (un_types.indexOf(type) == -1) {
+                        Object.defineProperty(SingletonT._instance, key, {
+                            get: function () {
+                                SingletonT._instance.delayLoad();
+                                return value;
+                            },
+                            set: function (newValue) {
+                                SingletonT._instance.delayLoad();
+                                value = newValue;
+                                SingletonT._instance.save();
+                            },
+                            enumerable: true,
+                            configurable: true
+                        });
+                    }
+                });
             }
             return SingletonT._instance as T;
         }
@@ -289,12 +334,15 @@ export function SingletonConfig<T>(key?: string) {
             // 加载数据
             let data = config.getItem(this.__key__);
             if (data) {
-                Object.assign(this, JSON.parse(data));
+                Object.assign(this, data);
             }
         }
 
-        private save(): void {
-            config.setItem(this.__key__, JSON.stringify(this));
+        /**
+         * 手动保存数据
+         */
+        save(): void {
+            config.setItem(this.__key__, this);
         }
     }
 
