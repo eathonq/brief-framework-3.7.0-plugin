@@ -287,7 +287,7 @@ export class ViewManager extends Component {
     @property({
         tooltip: "默认视图索引（优先使用默认视图）",
         readonly: false,
-        min: 0,
+        min: -1,
         step: 1
     })
     private defaultIndex: number = 0;
@@ -335,14 +335,13 @@ export class ViewManager extends Component {
                 this.setViewBaseNode(node);
             }
         }
-    }
 
-    protected start(): void {
+        // 显示默认视图
         if (this.defaultView != "") {
             this.show(this.defaultView);
         }
         else {
-            if (this.defaultIndex < this.viewList.length) {
+            if (this.defaultIndex < this.viewList.length && this.defaultIndex >= 0) {
                 this.show(this.viewList[this.defaultIndex].data.name);
             }
         }
@@ -394,15 +393,15 @@ export class ViewManager extends Component {
             let newViewBase = newViewNode.getComponent(ViewBase);
             this.viewContent.addChild(newViewNode);
 
-            // 如果是缓存节点则重置预置体为新节点
-            if(newViewBase.isCache){
+            // 如果是缓存模式则重置模板为节点模板，下次直接使用节点模板
+            if (newViewBase.isCache) {
                 viewTemplate.node = newViewNode;
                 viewTemplate.viewBase = newViewBase;
                 viewData = new ViewData(newViewBase, false, this.close.bind(this), this.show.bind(this));
             }
-            else{
+            else {
                 viewData = new ViewData(newViewBase, true, this.close.bind(this), this.show.bind(this));
-            }            
+            }
         }
         else {
             viewData = new ViewData(viewTemplate.viewBase, false, this.close.bind(this), this.show.bind(this));
@@ -551,19 +550,20 @@ export class ViewManager extends Component {
      * @param data 数据
      */
     showView(name?: string, data?: any): void {
-        if (!name) name = this.getDefaultName(ViewType.View);
-        if (!name) return;
-
-        if (this.viewStack.popTo(name, data)) {
-            return;
-        }
-        else {
-            let viewData = this.createViewData(name);
-            if (!viewData) return;
-            this.viewStack.push(viewData, data);
-
-            this.updateContentSiblingIndex();
-        }
+        // 使用延迟，防止在onLoad中调用
+        this.scheduleOnce(() => {
+            if (!name) name = this.getDefaultName(ViewType.View);
+            if (!name) return;
+            if (this.viewStack.popTo(name, data)) {
+                return;
+            }
+            else {
+                let viewData = this.createViewData(name);
+                if (!viewData) return;
+                this.viewStack.push(viewData, data);
+                this.updateContentSiblingIndex();
+            }
+        }, 0);
     }
 
     /**
