@@ -311,19 +311,19 @@ export class Binding extends Component {
         switch (this.componentName) {
             case 'cc.EditBox':
                 let editBox = this.node.getComponent(EditBox);
-                editBox.node.on('text-changed', (editBox: EditBox) => {
+                editBox.node.on(EditBox.EventType.TEXT_CHANGED, (editBox: EditBox) => {
                     this._context?.setValue(this._path, editBox.string);
                 }, this);
                 break;
             case 'cc.Toggle':
                 let toggle = this.node.getComponent(Toggle);
-                toggle.node.on('toggle', (toggle: Toggle) => {
+                toggle.node.on(Toggle.EventType.TOGGLE, (toggle: Toggle) => {
                     this._context?.setValue(this._path, toggle.isChecked);
                 }, this);
                 break;
             case 'cc.Button':
                 let button = this.node.getComponent(Button);
-                button.node.on('click', (button: Button) => {
+                button.node.on(Button.EventType.CLICK, (button: Button) => {
                     this._context?.doCallback(this._path, this.customEventData);
                 });
                 break;
@@ -335,7 +335,7 @@ export class Binding extends Component {
                 break;
             case 'cc.PageView':
                 let pageView = this.node.getComponent(PageView);
-                pageView.node.on('page-turning', (pageView: PageView) => {
+                pageView.node.on(PageView.EventType.PAGE_TURNING, (pageView: PageView) => {
                     this._context?.setValue(this._path, pageView.getCurrentPageIndex());
                 }, this);
                 break;

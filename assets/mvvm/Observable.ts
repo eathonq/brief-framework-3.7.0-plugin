@@ -58,22 +58,28 @@ class OverrideObject {
             this.overrideArrayPrototype(obj, pathArray);
         }
 
-        let target = obj.constructor.name;
-        Object.keys(obj).forEach((key) => {
-            // 检查是否需要重写
-            if (!decoratorData.checkProperty(target, key)) return;
+        const target = obj.constructor.name;
+        let self = this;
 
-            let self = this;
+        Object.keys(obj).forEach((key) => {
+            // 非数组类型需要判断是否需要重写
+            if(target !== 'Array'){
+                if (!decoratorData.checkProperty(target, key)) return;
+            }
+
             let oldVal = obj[key];
             let itemPathArray = pathArray.slice();
             itemPathArray.push(key);
 
             Object.defineProperty(obj, key, {
-                get: function () {
+                enumerable: true,
+                configurable: true,
+                get: function overrideGetter() {
                     return oldVal;
                 },
-                set: function (newVal) {
+                set: function overrideSetter(newVal) {
                     if (oldVal !== newVal) {
+                        // console.log(`数据更新：${itemPathArray.join('.')}, ${newVal}, ${oldVal}`);
                         if (OP.toString.call(newVal) === types.obj) {
                             self.overrideProperty(newVal, itemPathArray);
                         }
@@ -104,17 +110,17 @@ class OverrideObject {
      */
     private overrideArrayPrototype(array: any, pathArray: string[]) {
         // 保存原始 Array 原型  
-        var originalProto = Array.prototype;
+        const originalProto = Array.prototype;
         // 通过 Object.create 方法创建一个对象，该对象的原型是Array.prototype  
-        var overrideProto = Object.create(Array.prototype);
-        var self = this;
-        var result: any;
+        const overrideProto = Object.create(originalProto);
+        let result: any;
+        let self = this;
 
         // 遍历要重写的数组方法  
         array_funcs.forEach((method) => {
             Object.defineProperty(overrideProto, method, {
                 value: function () {
-                    var oldVal = this.slice();
+                    const oldVal = this.slice();
                     //调用原始原型上的方法  
                     result = originalProto[method].apply(this, arguments);
                     //继续监听新数组  
