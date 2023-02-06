@@ -169,14 +169,14 @@ export class Binding extends Component {
                 break;
         }
 
-        // 初始化默认值
-        this.setComponentValue(this._context?.getValue(this._path));
+        // 初始化默认值 start 时候会调用
+        // this.setComponentValue(this._context?.getValue(this._path));
     }
 
     /** 数组索引 */
     private _index = -1;
-    protected onEnable() {
-        if (this._index == -1) return;
+    protected start() {
+        if (EDITOR) return;
 
         // 检测数组索引是否变化
         if (this._context instanceof ItemsSource) {
@@ -186,11 +186,13 @@ export class Binding extends Component {
 
                 this._context?.unbind(this._path, this.onDataChange, this);
                 this.onLoad();
-            }
-            else {
                 this.setComponentValue(this._context?.getValue(this._path));
+                return;
             }
         }
+
+        // 初始化默认值
+        this.setComponentValue(this._context?.getValue(this._path));
     }
 
     protected onDestroy(): void {
