@@ -2,7 +2,7 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-01-30 16:14
+ * update = 2023-02-06 09:43
  */
 
 import { _decorator, Node, Component, director, Prefab, instantiate } from 'cc';
