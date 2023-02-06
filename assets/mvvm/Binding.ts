@@ -246,7 +246,7 @@ export class Binding extends Component {
             case 'cc.Button':
                 this.mode = BindingMode.OneWayToSource;
                 this._mode_visible = false;
-                this._customEventData_visible = false;
+                this._customEventData_visible = true;
                 break;
             case 'cc.Sprite':
                 this.mode = BindingMode.OneWay;
