@@ -223,6 +223,7 @@ export function platformInit(storage: IStorage) {
     PlatformStorage.instance.init(storage);
 }
 
+/** Map转Object */
 export function mapToObj(map: Map<string, any>): any {
     let obj = Object.create(null);
     for (let [k, v] of map) {
@@ -231,6 +232,7 @@ export function mapToObj(map: Map<string, any>): any {
     return obj;
 }
 
+/** Object转Map */
 export function objToMap(obj: any): Map<string, any> {
     let map = new Map();
     for (let k of Object.keys(obj)) {
@@ -239,6 +241,7 @@ export function objToMap(obj: any): Map<string, any> {
     return map;
 }
 
+/** Object转Map */
 export function objToMapSet(obj: any, map: Map<string, any>) {
     for (let k of Object.keys(obj)) {
         map.set(k, obj[k]);
@@ -248,103 +251,73 @@ export function objToMapSet(obj: any, map: Map<string, any>) {
 /** 
  * 本地存储
  * @example
- * config.setItem("key", "str");
- * config.setItem("key", 0);
- * config.setItem("key", false);
- * config.setItem("key", { a: 1, b: 2 });
- * config.setItem("key", [ "a", "b" ]);
- * config.setItem("key", new Array<string>());
- * config.setItem("key", new Map<string, string>()); // 不支持
- * config.setItem("key", mapToObj(new Map<string, string>())); // 转换成object
+ * config.setItem("str", "str");
+ * config.setItem("num", 0);
+ * config.setItem("bool", false);
+ * config.setItem("object", { a: 1, b: 2 });
+ * config.setItem("array", [ "a", "b" ]);
+ * config.setItem("Array", new Array<string>());
+ * // config.setItem("m", new Map<string, string>()); // 不支持
+ * config.setItem("o", mapToObj(new Map<string, string>())); // 转换成object
  */
 export const config = Configuration.instance;
 
-const OP = Object.prototype;
-const un_types = ['[object Object]', '[object Array]', '[object Map]'];
 /**
  * 本地存储配置单例模版方法
  * @param key 数据标识, 默认为类名
  * @example
  * class MyConfig extends SingletonConfig<MyConfig>("MyConfig") {
  *     // 自定义数据
- *     strData: string = "0";
- *     numData: number = 0;
- *     booleanData: boolean = false;
- *     objectData: object = { a: 1, b: 2 }; // 需要手动保存
- *     arrayData: string[] = [ "a", "b" ]; // 需要手动保存
- *     listData: Array<string> = new Array<string>(); // 需要手动保存
- *     mapData: Map<string, string> = new Map<string, string>(); // 不支持
+ *     str: string = "str";
+ *     num: number = 0;
+ *     bool: boolean = false;
+ *     object: object = { a: 1, b: 2 };
+ *     array: string[] = [ "a", "b" ];
+ *     list: Array<string> = new Array<string>();
+ *     // map = new Map<string, string>(); 不支持 Map 类型
  * }
- * MyConfig.instance.save(); // 手动保存
+ * MyConfig.instance.str = "new str";
+ * MyConfig.instance.save(); // 需要手动保存
  */
 export function SingletonConfig<T>(key?: string) {
-    class SingletonT {
-        private __key__ = "";
-        protected constructor() {
-            if (key) {
-                this.__key__ = key;
-            }
-            else {
-                this.__key__ = this.constructor.name;
-            }
-        }
-        private static _instance: SingletonT = null;
-        public static get instance(): T {
-            if (SingletonT._instance == null) {
-                SingletonT._instance = new this();
-
-                // 仅重写基础类型的 get set
-                let keys = Object.keys(SingletonT._instance);
-                // 去掉 __key__
-                keys.splice(keys.indexOf("__key__"), 1);
-                // 去掉 __isDelayLoad__
-                keys.splice(keys.indexOf("__isDelayLoad__"), 1);
-                keys.forEach(key => {
-                    let value = SingletonT._instance[key];
-                    let type = OP.toString.call(value);
-                    if (un_types.indexOf(type) == -1) {
-                        Object.defineProperty(SingletonT._instance, key, {
-                            get: function () {
-                                SingletonT._instance.delayLoad();
-                                return value;
-                            },
-                            set: function (newValue) {
-                                SingletonT._instance.delayLoad();
-                                value = newValue;
-                                SingletonT._instance.save();
-                            },
-                            enumerable: true,
-                            configurable: true
-                        });
-                    }
-                });
-            }
-            return SingletonT._instance as T;
-        }
-
-        private __isDelayLoad__ = false;
-        /** 
-         * 延迟加载，只有在访问字段时才会加载数据
-         * 保证在构造函数中不会加载数据
+    class SingletonProxy {
+        private static _key: string = "default";
+        private static _instance: SingletonProxy = null;
+        /**
+         * 配置单例
+         * @example
+         * MyConfig.instance.str = "new str";
+         * MyConfig.instance.save(); // 需要手动保存
          */
-        private delayLoad() {
-            if (this.__isDelayLoad__) return;
-            this.__isDelayLoad__ = true;
+        static get instance(): T {
+            if (SingletonProxy._instance == null) {
+                SingletonProxy._key = key ? key : this.name;
+                SingletonProxy._instance = new this();
+                SingletonProxy._instance.load();
+            }
+            return SingletonProxy._instance as T;
+        }
+
+        private _isLoad: boolean = false;
+        /** 加载数据 */
+        private load(): void {
+            if (this._isLoad) {
+                return;
+            }
+            this._isLoad = true;
 
             // 加载数据
-            let data = config.getItem(this.__key__);
+            let data = config.getItem(SingletonProxy._key);
             if (data) {
-                Object.assign(this, data);
+                Object.assign(SingletonProxy._instance, data);
             }
         }
 
-        /**
-         * 手动保存数据
-         */
+        /** 保存数据 */
         save(): void {
-            config.setItem(this.__key__, this);
+            config.setItem(SingletonProxy._key, SingletonProxy._instance);
         }
     }
 
-    return SingletonT;
+    return SingletonProxy;
 }
