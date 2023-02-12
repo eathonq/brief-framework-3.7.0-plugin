@@ -2,12 +2,13 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-01-30 16:14
+ * update = 2023-02-12 13:06
  */
 
 import { _decorator, Node, instantiate, NodePool } from 'cc';
 import { EDITOR } from 'cc/env';
 import { Locator } from '../common/Locator';
+import { observe, Operation } from '../common/ReactiveObserve';
 import { DataContext } from "./DataContext";
 import { DecoratorDataKind } from './MVVM';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
@@ -20,6 +21,7 @@ const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 @executeInEditMode
 @menu('Brief/MVVM/ItemsSource')
 export class ItemsSource extends DataContext {
+
     @property({
         type: Node,
         tooltip: '模板节点'
@@ -36,14 +38,44 @@ export class ItemsSource extends DataContext {
      * }
      */
     protected onLoad() {
-        this.bindDataKind = DecoratorDataKind.Array;
+        this._bindDataKind = DecoratorDataKind.Array;
 
         super.onLoad();
-        this.checkEditorComponent();
+
         if (EDITOR) return;
 
-        this._context?.bind(this.path, this.onDataChange, this);
         this.initTemplate();
+    }
+
+    protected onUpdateData() {
+        this.upperDataContext = this.parent.dataContext;
+        this._data = this.upperDataContext[this._bindingName];
+
+        // 设置观察函数
+        observe((() => {
+            this._data = this.upperDataContext[this._bindingName];
+            this._updateCallbackList.forEach((callback) => {
+                callback();
+            });
+
+            // 设置数组观察函数
+            observe(((operation: Operation) => {
+                // 更新数组
+                let length = this._data.length;
+                if (!operation) return;
+                let type = operation.type;
+                if (type == 'add') {
+                    let target = operation.target as any[];
+                    this.addItem(target.indexOf(operation.value), operation.value);
+                }
+                else if (type == 'delete') {
+                    this.deleteItem(operation.oldValue);
+                }
+            }).bind(this));
+
+        }).bind(this));
+
+        this.cleanItems();
     }
 
     private _content: Node = null;
@@ -54,9 +86,7 @@ export class ItemsSource extends DataContext {
             console.warn(`path:${Locator.getNodeFullPath(this.node)} `, `组件 ItemsSource `, '没有设置模板节点');
             return;
         }
-
         this._template = this.template;
-        this._template.active = false;
         this._content = this._template.parent;
         if (!this._pool) {
             this._pool = new NodePool(`${this.path}`);
@@ -64,81 +94,52 @@ export class ItemsSource extends DataContext {
         this._pool.put(this._template);
     }
 
-    private onDataChange(newVal: any, oldVal: any, path: string) {
-        if (path !== this.path) return;
-
-        // 只处理数组，不处理对象
-        if (Object.prototype.toString.call(newVal) !== '[object Array]') return;
-
-        let content = this._content;
-        if (!content) return;
-
-        // // 清空内容
-        // let child = content.children;
-        // for (let i = child.length - 1; i >= 0; i--) {
-        //     let itemOld = child[i];
-        //     itemOld.active = false;
-        //     this._pool.put(itemOld);
-        // }
-        // this._itemMap.clear();
-        // // 添加新内容
-        // for (let i = 0; i < newVal.length; i++) {
-        //     let itemNew = this._pool.get();
-        //     if (!itemNew) {
-        //         itemNew = instantiate(this._template);
-        //     }
-        //     this.setItemIndex(itemNew, i);
-        //     itemNew.active = true;
-        //     content.addChild(itemNew);
-        // }
-
-        // 删除多余项
-        let child = content.children;
-        for (let i = child.length - 1; i >= newVal.length; i--) 
-        {
-            let itemOld = child[i];
-            itemOld.active = false;
-            this._pool.put(itemOld);
-        }
-
-        // 更新索引
-        child = content.children;
-        this._itemMap.clear();
-        for (let i = 0; i < child.length; i++) 
-        {
-            let item = child[i];
-            this.setItemIndex(item, i);
-        }
-
-        // 添加新增项
-        for (let i = child.length; i < newVal.length; i++)
-        {
-            let itemNew = this._pool.get();
-            if (!itemNew) {
-                itemNew = instantiate(this._template);
+    private _nodeDataList: { node: Node, data: any }[] = [];
+    private cleanItems() {
+        if (this._content) {
+            let children = this._content.children;
+            for (let i = children.length - 1; i >= 0; i--) {
+                let item = children[i];
+                this._pool.put(item);
             }
-            this.setItemIndex(itemNew, i);
-            itemNew.active = true;
-            content.addChild(itemNew);
         }
 
-        this.onSimpleTypeDataChange(newVal, oldVal);
-
-        // 通知内容变化（优化ScrollViewDynamic刷新）
-        this.node.emit('ScrollViewDynamic.refresh', newVal, oldVal);
+        if (this._nodeDataList && this._nodeDataList.length > 0) {
+            this._nodeDataList.forEach((item) => {
+                this._pool.put(item.node);
+            });
+        }
+        this._nodeDataList = [];
     }
 
-    //#region Item With Index
-    private _itemMap: Map<Node, number> = new Map();
-    private setItemIndex(template: Node, index: number) {
-        this._itemMap.set(template, index);
+    private addItem(index: number, data: any) {
+        if (index < 0) return;
+        let node = this._pool.get();
+        if (!node) {
+            node = instantiate(this._template);
+        }
+        this._content.insertChild(node, index);
+        this._nodeDataList.push({ node, data });
     }
 
-    getItemsIndex(bindingNode: Node) {
-        let template = bindingNode.parent;
+    private deleteItem(data: any) {
+        let index = this._nodeDataList.findIndex((item) => {
+            return item.data == data;
+        });
+        if (index < 0) return;
+
+        let item = this._nodeDataList[index];
+        this._pool.put(item.node);
+        this._nodeDataList.splice(index, 1);
+    }
+
+    getItemIndex(node: Node) {
+        let template = node;
+        let index = -1;
         while (template) {
-            if (this._itemMap.has(template)) {
-                return this._itemMap.get(template);
+            index = this._content.children.indexOf(template);
+            if (index >= 0) {
+                return index;
             }
             if (template === this.node) {
                 return -1;
@@ -147,31 +148,5 @@ export class ItemsSource extends DataContext {
         }
         return -1;
     }
-    //#endregion
-
-    //#region 通知基础类型列表
-    private onSimpleTypeDataChange(newVal: any, oldVal: any) {
-        if (this.isSimpleType()) {
-            for (let i = 0; i < newVal.length; i++) {
-                let path = `${this.path}.${i}.${this._bindingType}`;
-                this._context.observable.onDataChange(path, newVal[i], oldVal[i]);
-            }
-        }
-    }
-
-    private _simpleTypeMap = {
-        "String": true,
-        "Number": true,
-        "Boolean": true
-    }
-
-    /**
-     * 是否是基础类型
-     * @returns true:是基础类型, false:不是基础类型
-     */
-    isSimpleType() {
-        return this._simpleTypeMap[this._bindingType];
-    }
-    //#endregion
 
 }

@@ -33,7 +33,7 @@ export interface Operation {
 
 //#region handlers 响应式对象的处理器
 function isObject(val: any): val is object {
-    return typeof val === "object" && val !== "null"
+    return typeof val === "object" && val !== null;
 }
 
 // 全局对象

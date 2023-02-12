@@ -107,23 +107,23 @@ export class ScrollViewDynamic extends Component {
         this.checkEditorComponents();
 
         this.initScrollView();
+    }
 
-        // 监听内容变化
-        this.node.on("ScrollViewDynamic.refresh", () => {
+    private initScrollView() {
+        if (this.direction == Direction.VERTICAL) {
+            this.scrollView.node.on(ScrollView.EventType.SCROLLING, this.onScrollingWithVertical, this);
+        }
+        else {
+            this.scrollView.node.on(ScrollView.EventType.SCROLLING, this.onScrollingWithHorizontal, this);
+        }
+
+        // 监听子节点变化
+        this.content.on(Node.EventType.CHILD_REMOVED, () => {
             // 延迟刷新
             this.scheduleOnce(() => {
                 this.refresh();
             }, 0);
         }, this);
-    }
-
-    private initScrollView() {
-        if (this.direction == Direction.VERTICAL) {
-            this.scrollView.node.on('scrolling', this.onScrollingWithVertical, this);
-        }
-        else {
-            this.scrollView.node.on('scrolling', this.onScrollingWithHorizontal, this);
-        }
     }
 
     private _offsetYUnit = 0;
@@ -233,8 +233,7 @@ export class ScrollViewDynamic extends Component {
     }
 
     private _firstRefresh = false;
-    /** 手动刷新 */
-    refresh() {
+    private refresh() {
         if (this.direction == Direction.VERTICAL) {
             if (!this._firstRefresh) {
                 this._firstRefresh = true;

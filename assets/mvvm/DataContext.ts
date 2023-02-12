@@ -2,14 +2,14 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-01-30 16:14
+ * update = 2023-02-12 13:06
  */
 
 import { _decorator, Component, Node, Enum, CCClass } from 'cc';
 import { EDITOR } from 'cc/env';
 import { Locator } from '../common/Locator';
+import { observe } from '../common/ReactiveObserve';
 import { decoratorData, DecoratorDataKind } from './MVVM';
-import { BindCallback, Observable } from "./Observable";
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /**
@@ -20,41 +20,30 @@ const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 @executeInEditMode
 @menu('Brief/MVVM/DataContext')
 export class DataContext extends Component {
-    
-    private _isRoot = false;
-    /** 是否根数据上下文  */
-    protected get isRoot() {
-        return this._isRoot;
-    }
-    protected set isRoot(val: boolean) {
-        this._isRoot = val;
-    }
+
+    /** 是否数据上下文根数据  */
+    protected _isRoot = false;
 
     /** 绑定数据种类 */
-    protected bindDataKind = DecoratorDataKind.Object;
+    protected _bindDataKind = DecoratorDataKind.Object;
 
-    /** 数据上下文 */
+    /** 数据上下文路径 */
     @property({
         tooltip: '数据上下文',
         readonly: true,
-        displayName: 'DataContext',
-        override: true
+        displayName: 'DataContext'
     })
-    private get parentPath() {
-        return this._context?.path;
-    };
+    protected parent: DataContext = null;
 
-    //#region 绑定属性
     @property
     protected _bindingName = "";
-
     @property
     protected _bindingType = "";
-
     protected _bindingEnums: { name: string, value: number, type: string }[] = [];
     private _binding = 0;
+    /** 绑定对象或集合 */
     @property({
-        tooltip: '绑定集合或对象',
+        tooltip: '绑定对象或集合',
         type: Enum({}),
         serializable: true,
         visible() {
@@ -72,113 +61,77 @@ export class DataContext extends Component {
             this.selectedBindItemsType();
         }
     }
-    //#endregion
 
     private _path = '';
-    /** 数据绑定全路径 */
+    /** 数据路径 */
     get path(): string {
         return this._path;
     }
     protected set path(val: string) {
         this._path = val;
     }
-
-    private _observable: Observable = null;
-    /** 数据观察管理器 */
-    get observable(): Observable {
-        return this._observable;
-    }
-    protected set observable(val: Observable) {
-        this._observable = val;
+    /** 当前绑定数据 */
+    protected _data: any = null;
+    /** 当前绑定数据 */
+    get dataContext() {
+        return this._data;
     }
 
-    /** 绑定上下文 */
-    protected _context: DataContext = null;
-
-    onRestore() {
-        this.checkEditorComponent();
-    }
-
-    /**
-     * 子类重写此方法需要调用 super.onLoad()
-     * @example
-     * protected onLoad() {
-     *    super.onLoad();
-     *    if (EDITOR) return;
-     *    // TODO
-     * }
-     */
-    protected onLoad() {
-        this.checkEditorComponent();
-        if(EDITOR) return;
-        if (this.isRoot) return;
-
-        if (!this._context) {
-            this._context = DataContext.lookUpDataContext(this.node, false);
-            if (!this._context) {
-                console.warn(`path:${Locator.getNodeFullPath(this.node)} `, `组件 ItemsSource `, '找不到 DataContext');
-                return;
-            }
-            this.observable = this._context.observable;
-        }
-
-        this.path = this._bindingName !== "" ? `${this._context.path}.${this._bindingName}` : this._context.path;
-    }
+    /** 上一级绑定数据 */
+    protected upperDataContext: any = null;
 
     //#region EDITOR
-    protected checkEditorComponent() {
-        if (!EDITOR) return;
-        if (this.isRoot) return;
-
-        // 上下文数据查找
-        let context = DataContext.lookUpDataContext(this.node, false);
-        if (!context) {
-            console.warn(`path:${Locator.getNodeFullPath(this.node)} `, `组件 ItemsSource `, '找不到 DataContext');
-            return;
-        }
-        this._context = context;
-        this.observable = this._context.observable;
-
-        this.updateEditorBindDataEnum(context);
+    onRestore() {
+        if (this._isRoot) return;
+        this.checkEditorComponent();
     }
 
-     /** 组件绑定数据类型更新 */
-    private updateEditorBindDataEnum(context: DataContext) {
+    protected checkEditorComponent() {
+        this.initParentDataContext();
+        this.updateEditorBindingEnums();
+    }
+
+    /** 组件绑定数据类型更新 */
+    private updateEditorBindingEnums() {
         // 设置绑定属性
-        let dataList = decoratorData.getPropertyList(context.path);
+        let dataList = decoratorData.getPropertyList(this.parent.path);
         if (dataList) {
-            const arr = [];
+            const newEnums = [];
             let count = 0;
-            if(this.bindDataKind === DecoratorDataKind.Object){
+            if (this._bindDataKind === DecoratorDataKind.Object) {
                 dataList.forEach((item) => {
                     // 仅显示对象类型
-                    if(item.kind === DecoratorDataKind.Object){
-                        arr.push({ name: `${item.name}`, value: count++, type: item.type.name });
+                    if (item.kind === DecoratorDataKind.Object) {
+                        newEnums.push({ name: `${item.name}`, value: count++, type: item.type });
                     }
                 });
             }
-            else if(this.bindDataKind === DecoratorDataKind.Array){
+            else if (this._bindDataKind === DecoratorDataKind.Array) {
                 dataList.forEach((item) => {
                     // 仅显示数组
-                    if(item.kind === DecoratorDataKind.Array){
-                        arr.push({ name: `${item.name}`, value: count++, type: item.type[0].name });
+                    if (item.kind === DecoratorDataKind.Array) {
+                        newEnums.push({ name: `${item.name}`, value: count++, type: item.type });
                     }
                 });
-            } 
-            
-            this._bindingEnums = arr;
-            CCClass.Attr.setClassAttr(this, 'binding', 'enumList', arr);
+            }
+
+            this._bindingEnums = newEnums;
+            CCClass.Attr.setClassAttr(this, 'binding', 'enumList', newEnums);
         }
         else {
             this._bindingEnums = [];
             CCClass.Attr.setClassAttr(this, 'binding', 'enumList', []);
         }
 
-        // 初始化绑定枚举
+        // 设置绑定数据枚举默认值
         if (this._bindingName !== '') {
             let findIndex = this._bindingEnums.findIndex((item) => { return item.name === this._bindingName; });
             if (findIndex === -1) {
                 console.warn(`PATH ${Locator.getNodeFullPath(this.node)} `, `组件Binding绑定 ${this._bindingName} 已经不存在`);
+                // 如果只有一个枚举，就设置为默认值
+                if (this._bindingEnums.length == 1) {
+                    this.binding = 0;
+                }
             }
             else {
                 this.binding = findIndex;
@@ -191,58 +144,60 @@ export class DataContext extends Component {
 
     private selectedBindItemsType() {
         // 设置 EDITOR 状态下，绑定属性
-        this.path = `${this._context.path}.${this._bindingName}.${this._bindingType}`;
+        this.path = `${this.parent.path}.${this._bindingName}.${this._bindingType}`;
     }
     //#endregion
 
     /**
-     * 绑定数据
-     * @param path 数据路径
-     * @param callback 回调函数
-     * @param target 回调函数的对象
-     * @returns 
+     * 子类重写此方法需要调用 super.onLoad()
+     * @example
+     * protected onLoad() {
+     *    super.onLoad();
+     *    if (EDITOR) return;
+     *    // TODO
+     * }
      */
-    bind(path: string, callback: BindCallback, target?: any): void {
-        this.observable?.bind(path, callback, target);
+    protected onLoad() {
+        if (this._isRoot) return;
+
+        if (EDITOR) {
+            this.checkEditorComponent();
+            return;
+        }
+
+        this.initParentDataContext();
+        this.path = this._bindingName !== "" ? `${this.parent.path}.${this._bindingName}` : this.parent.path;
+        this.onUpdateData();
     }
 
-    /**
-     * 解除绑定
-     * @param path 数据路径
-     * @param callback 回调函数
-     * @param target 回调函数的对象
-     * @returns 
-     */
-    unbind(path: string, callback: BindCallback, target?: any): void {
-        this.observable?.unbind(path, callback, target);
+    private initParentDataContext() {
+        if (this.parent) return;
+        this.parent = DataContext.lookUp(this.node, false);
+        if (!this.parent) {
+            console.warn(`path:${Locator.getNodeFullPath(this.node)} `, `组件 ItemsSource `, '找不到 DataContext');
+        }
+
+        this.parent.addUpdateCallback(this.onUpdateData.bind(this));
     }
 
-    /**
-     * 设置数据
-     * @param path 数据路径
-     * @param value 数据值
-     */
-    setValue(path: string, value: any) {
-        this.observable?.setValue(path, value);
+    /** 绑定数据更新，子类重写 */
+    protected onUpdateData() {
+        this.upperDataContext = this.parent._data;
+        this._data = this.upperDataContext[this._bindingName];
+
+        // 设置观察函数
+        observe((() => {
+            this._data = this.upperDataContext[this._bindingName];
+            this._updateCallbackList.forEach((callback) => {
+                callback();
+            });
+        }).bind(this));
     }
 
-    /**
-     * 获取数据
-     * @param path 数据路径 
-     * @param def 默认值
-     * @returns 
-     */
-    getValue(path: string, def?: any) {
-        return this.observable?.getValue(path, def);
-    }
-
-    /**
-     * 执行UI组件回调
-     * @param path 数据路径 
-     * @param customEventData 自定义数据
-     */
-    doCallback(path: string, customEventData?: string) {
-        this.observable?.doCallback(path, customEventData);
+    protected _updateCallbackList: Function[] = [];
+    /** 添加数据更新回调 */
+    addUpdateCallback(callback: Function) {
+        this._updateCallbackList.push(callback);
     }
 
     /**
@@ -251,7 +206,7 @@ export class DataContext extends Component {
      * @param fromCurrent 是否从当前节点开始查找
      * @returns 数据上下文节点
      */
-    static lookUpDataContext(current: Node, fromCurrent = true): DataContext {
+    static lookUp(current: Node, fromCurrent = true): DataContext {
         let node = fromCurrent ? current : current.parent;
         while (node) {
             let dataContext = node.getComponent(DataContext);
@@ -268,7 +223,7 @@ export class DataContext extends Component {
      * @param current 当前节点
      * @returns 数据上下文节点
      */
-    static lookDownDataContext(current: Node): DataContext {
+    static lookDown(current: Node): DataContext {
         let dataContext = current.getComponentInChildren(DataContext);
         if (dataContext) {
             return dataContext;

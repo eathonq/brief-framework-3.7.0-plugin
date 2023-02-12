@@ -2,12 +2,12 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-01-30 16:14
+ * update = 2023-02-12 13:06
  */
 
 import { EDITOR } from 'cc/env';
+import { reactive } from '../common/ReactiveObserve';
 import { DataContext } from './DataContext';
-import { Observable } from './Observable';
 
 /**
  * 视图模型基类
@@ -17,7 +17,7 @@ import { Observable } from './Observable';
 export class ViewModelBase extends DataContext {
     /**
      * 子类重写此方法需要调用 super.onLoad()
-     * @param globalObject 全局数据源
+     * @param data 绑定数据源
      * @example
      * protected onLoad() {
      *    super.onLoad();
@@ -25,46 +25,20 @@ export class ViewModelBase extends DataContext {
      *    // TODO
      * }
      */
-    protected onLoad(globalObject?: any) {
-        this.isRoot = true;
-        this.path = this.constructor.name;
-        this._context = this;
+    protected onLoad(data?: any) {
+        if (!data) {
+            console.error(`ViewModelBase: ${this.path} data is null`);
+            return;
+        }
 
-        // 全局数据源重置 path
-        if(globalObject) this.path = globalObject.constructor.name;
-
+        this._isRoot = true;
+        this.path = data.constructor.name;
+        this.parent = this;
+        
         super.onLoad();
+
         if (EDITOR) return;
 
-        if (!globalObject) {
-            let observable = new Observable();
-            observable.init(this.path, this);
-            this.observable = observable;
-        }
-        else {
-            let observable = globalMap.get(this.path);
-            if (!observable) {
-                observable = new Observable();
-                observable.init(this.path, globalObject);
-                globalMap.set(this.path, observable);
-            }
-            this.observable = observable;
-        }
+        this._data = reactive(data);
     }
-
-    // /**
-    //  * 子类重写此方法需要调用 super.onDestroy()
-    //  * @example
-    //  * protected onDestroy() {
-    //  *    super.onDestroy();
-    //  *    if(EDITOR) return;
-    //  *    // TODO
-    //  * }
-    //  */
-    // protected onDestroy() {
-    //     if (EDITOR) return;
-    //     this.observable?.clean();
-    // }
 }
-
-const globalMap = new Map<string, Observable>();
