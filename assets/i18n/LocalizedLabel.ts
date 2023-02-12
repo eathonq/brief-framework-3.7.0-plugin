@@ -2,7 +2,7 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-01-30 16:14
+ * update = 2023-02-12 09:04
  */
 
 import { _decorator, Component } from 'cc';
@@ -56,19 +56,11 @@ export class LocalizedLabel extends Component {
         this.resetValue();
     }
 
+    //#region EDITOR
     onRestore() {
         this.checkEditorComponent();
     }
 
-    protected onLoad() {
-        this.checkEditorComponent();
-        if (!i18n.ready) {
-            i18n.init();
-        }
-        this.resetValue();
-    }
-
-    //#region EDITOR
     private checkEditorComponent() {
         if (EDITOR) {
             let checkArray = COMP_ARRAY_CHECK;
@@ -82,6 +74,14 @@ export class LocalizedLabel extends Component {
         }
     }
     //#endregion
+
+    protected onLoad() {
+        this.checkEditorComponent();
+        if (!i18n.ready) {
+            i18n.init();
+        }
+        this.resetValue();
+    }
 
     /**
          * 重置地址

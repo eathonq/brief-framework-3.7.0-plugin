@@ -2,7 +2,7 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-01-30 16:14
+ * update = 2023-02-12 09:04a
  */
 
 import { _decorator, Component, Node, SpriteFrame, Sprite } from 'cc';
@@ -34,10 +34,7 @@ export class LocalizedSpriteFrameSet extends Component {
     })
     list: LocalizedSpriteFrameSetInfo[] = [];
 
-    protected onLoad() {
-        this.checkEditorComponent();
-    }
-
+    //#region EDITOR
 
     protected onDestroy() {
         this.checkEditorComponent(true);
@@ -55,6 +52,12 @@ export class LocalizedSpriteFrameSet extends Component {
                 localizedSprite.languageSpriteHandler = this.languageSprite.bind(this);
             }
         }
+    }
+
+    //#endregion
+
+    protected onLoad() {
+        this.checkEditorComponent();
     }
 
     private languageSprite(sprite: Sprite, language: string): void {

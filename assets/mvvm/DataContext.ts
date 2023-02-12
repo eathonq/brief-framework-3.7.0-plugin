@@ -251,12 +251,12 @@ export class DataContext extends Component {
      * @param fromCurrent 是否从当前节点开始查找
      * @returns 数据上下文节点
      */
-    static lookUpDataContext<T extends DataContext>(current: Node, fromCurrent = true): T {
+    static lookUpDataContext(current: Node, fromCurrent = true): DataContext {
         let node = fromCurrent ? current : current.parent;
         while (node) {
             let dataContext = node.getComponent(DataContext);
             if (dataContext) {
-                return dataContext as T;
+                return dataContext;
             }
             node = node.parent;
         }
@@ -268,10 +268,10 @@ export class DataContext extends Component {
      * @param current 当前节点
      * @returns 数据上下文节点
      */
-    static lookDownDataContext<T extends DataContext>(current: Node): T {
+    static lookDownDataContext(current: Node): DataContext {
         let dataContext = current.getComponentInChildren(DataContext);
         if (dataContext) {
-            return dataContext as T;
+            return dataContext;
         }
         return null;
     }

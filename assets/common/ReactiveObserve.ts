@@ -35,6 +35,21 @@ export interface Operation {
 function isObject(val: any): val is object {
     return typeof val === "object" && val !== "null"
 }
+
+// 全局对象
+const globalObj =
+    typeof window === "object" ? window : Function("return this")()
+
+/** 对于内置的一些对象不去处理 */
+export function shouldInstrument({ constructor }: Raw) {
+    const isBuiltIn =
+        typeof constructor === "function" &&
+        constructor.name in globalObj &&
+        globalObj[constructor.name] === constructor;
+    // @ts-ignore
+    return !isBuiltIn || handlers.has(constructor)
+}
+
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 const rawToProxy = new WeakMap();
@@ -261,28 +276,30 @@ const collectionHandlers = {
     }
 }
 
-// 根据对象的类型 获取Proxy的handlers
+/** 根据对象的类型 获取Proxy的handlers */
+// @ts-ignore
 const handlers = new Map([
-    ['Map', collectionHandlers],
-    ['Set', collectionHandlers],
-    ['WeakMap', collectionHandlers],
-    ['WeakSet', collectionHandlers],
-    ['Object', baseHandlers],
-    ['Array', baseHandlers],
-    ['Int8Array', baseHandlers],
-    ['Uint8Array', baseHandlers],
-    ['Uint8ClampedArray', baseHandlers],
-    ['Int16Array', baseHandlers],
-    ['Uint16Array', baseHandlers],
-    ['Int32Array', baseHandlers],
-    ['Uint32Array', baseHandlers],
-    ['Float32Array', baseHandlers],
-    ['Float64Array', baseHandlers],
+    [Map, collectionHandlers],
+    [Set, collectionHandlers],
+    [WeakMap, collectionHandlers],
+    [WeakSet, collectionHandlers],
+    [Object, baseHandlers],
+    [Array, baseHandlers],
+    [Int8Array, baseHandlers],
+    [Uint8Array, baseHandlers],
+    [Uint8ClampedArray, baseHandlers],
+    [Int16Array, baseHandlers],
+    [Uint16Array, baseHandlers],
+    [Int32Array, baseHandlers],
+    [Uint32Array, baseHandlers],
+    [Float32Array, baseHandlers],
+    [Float64Array, baseHandlers],
 ])
 
 /** 获取Proxy的handlers */
 function getHandlers(obj: Raw) {
-    return handlers.get(obj.constructor.name) || baseHandlers;
+    // @ts-ignore
+    return handlers.get(obj.constructor) || baseHandlers;
 }
 //#endregion
 
@@ -448,8 +465,10 @@ function getRunningReaction() {
  * @returns 响应式对象
  */
 export function reactive<T extends object>(raw: T): T {
-    // 如果已经是响应式对象，直接返回
-    if (proxyToRaw.has(raw)) return raw;
+    // 已经被定义成响应式proxy了 或者传入的是内置对象 就直接原封不动的返回
+    if (proxyToRaw.has(raw) || !shouldInstrument(raw)) {
+        return raw;
+    }
 
     // 如果已经是原始对象，直接返回
     const exitProxy = rawToProxy.get(raw);

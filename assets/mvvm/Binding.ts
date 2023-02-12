@@ -2,7 +2,7 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-01-30 16:14
+ * update = 2023-02-11 15:37
  */
 
 import { _decorator, Node, EditBox, Component, Enum, Toggle, Slider, PageView, Sprite, ToggleContainer, EventHandler, Button, CCClass } from 'cc';
@@ -16,7 +16,7 @@ const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /** 组件检测数组 */
 const COMP_ARRAY_CHECK = [
-  //['绑定组件名','绑定属性名']
+    //['绑定组件名','绑定属性名']
     ['cc.Label', 'string'],
     ['cc.RichText', 'string'],
     ['cc.EditBox', 'string'],
@@ -110,7 +110,7 @@ export class Binding extends Component {
     /** 绑定模式 */
     @property({
         type: Enum(BindingMode),
-        tooltip: '绑定模式:\n TwoWay: 双向绑定(View<=>Model);\n OneWay: 单向绑定(View<-Model);\n OneTime: 一次单向绑定(View<-Model);\n OneWayToSource: 单向绑定(View->Model)。',
+        tooltip: '绑定模式:\n TwoWay: 双向绑定(Model<->View);\n OneWay: 单向绑定(Model->View);\n OneTime: 一次单向绑定(Model->View);\n OneWayToSource: 单向绑定(Model<-View)。',
         visible() {
             return this._mode_visible;
         }
@@ -307,6 +307,8 @@ export class Binding extends Component {
 
     //#endregion
 
+    //#region 组件回调
+
     private onComponentCallback() {
         switch (this.componentName) {
             case 'cc.EditBox':
@@ -368,27 +370,15 @@ export class Binding extends Component {
         this.setComponentValue(newVal);
     }
 
-    // get componentValue() {
-    //     return this.getComponentValue();
-    // }
+    //#endregion
 
-    /** 获取组件值 */
-    // private getComponentValue(): any {
-    //     switch (this.componentName) {
-    //         case 'cc.PageView':
-    //             return this.node.getComponent(PageView).getCurrentPageIndex();
-    //         case 'cc.Sprite':
-    //             return this.node.getComponent(Sprite).spriteFrame.nativeUrl;
-    //         case 'cc.ToggleContainer':
-    //             return 0;
-    //         default:
-    //             return this.node.getComponent(this.componentName)[this.componentProperty];
-    //     }
-    // }
+    //#region 组件值
 
-    /** 解决某些组件不能在组件初始化时候马上进行设置的优化处理 */
-    private _delaySetComponentValue = true;
     private _oldValue: any = null;
+    get componentValue() {
+        return this._oldValue;
+    }
+
     /** 设置组件值 */
     private setComponentValue(value: any) {
         if (value === undefined || value === null) return;
@@ -397,15 +387,10 @@ export class Binding extends Component {
 
         switch (this.componentName) {
             case 'cc.PageView':
-                if (this._delaySetComponentValue) {
-                    this._delaySetComponentValue = false;
-                    this.scheduleOnce(() => {
-                        this.node.getComponent(PageView).setCurrentPageIndex(value);
-                    }, 0.1);
-                }
-                else {
+                // PageView 组件在初始化时候，设置当前页会无效，所以延迟设置
+                this.scheduleOnce(() => {
                     this.node.getComponent(PageView).setCurrentPageIndex(value);
-                }
+                }, 0);
                 break;
             case 'cc.Sprite':
                 ResourcesUtil.setSprite(this.node.getComponent(Sprite), value);
@@ -433,4 +418,6 @@ export class Binding extends Component {
             this._context?.unbind(this._path, this.onDataChange, this);
         }
     }
+    //#endregion
+
 }

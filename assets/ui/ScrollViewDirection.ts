@@ -2,7 +2,7 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-01-30 16:14
+ * update = 2023-02-12 09:04
  */
 
 /** ScrollView方向类型 */
@@ -85,11 +85,8 @@ export class ScrollViewDirection extends Component {
         this.scrollBar.node.active = value;
     }
 
+    //#region EDITOR
     onRestore(): void {
-        this.checkEditorComponents();
-    }
-
-    protected onLoad(): void {
         this.checkEditorComponents();
     }
 
@@ -128,6 +125,12 @@ export class ScrollViewDirection extends Component {
                 console.error('ScrollViewContent: content is null');
             }
         }
+    }
+
+    //#endregion
+
+    protected onLoad(): void {
+        this.checkEditorComponents();
     }
 
     private autoAdjustDirection() {

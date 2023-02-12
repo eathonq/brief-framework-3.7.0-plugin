@@ -2,7 +2,7 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-01-30 16:14
+ * update = 2023-02-12 09:04
  */
 
 import { CCInteger, Component, Enum, error, Layout, math, Node, ScrollView, tween, UITransform, v2, _decorator } from 'cc';
@@ -67,18 +67,9 @@ export class ScrollViewDynamic extends Component {
     previewUnit = 0;
     //#endregion
 
-    protected onLoad() {
+    //#region EDITOR
+    onRestore() {
         this.checkEditorComponents();
-
-        this.initScrollView();
-
-        // 监听内容变化
-        this.node.on("ScrollViewDynamic.refresh", ()=>{
-            // 延迟刷新
-            this.scheduleOnce(()=>{
-                this.refresh();
-            }, 0);
-        }, this);
     }
 
     private checkEditorComponents() {
@@ -109,6 +100,21 @@ export class ScrollViewDynamic extends Component {
         this.direction = this.scrollView.vertical ? Direction.VERTICAL : Direction.HORIZONTAL;
 
         return true;
+    }
+    //#endregion
+
+    protected onLoad() {
+        this.checkEditorComponents();
+
+        this.initScrollView();
+
+        // 监听内容变化
+        this.node.on("ScrollViewDynamic.refresh", () => {
+            // 延迟刷新
+            this.scheduleOnce(() => {
+                this.refresh();
+            }, 0);
+        }, this);
     }
 
     private initScrollView() {
@@ -272,7 +278,7 @@ export class ScrollViewDynamic extends Component {
             else
                 this._onPreloadMore();
         }
-        
+
         this._scrollToCheckLoadMore = true;
     }
 

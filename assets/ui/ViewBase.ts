@@ -2,7 +2,7 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-01-30 16:14
+ * update = 2023-02-12 09:04
  */
 
 import { _decorator, Component, Enum, EventTouch, Label } from "cc";
@@ -72,12 +72,9 @@ export class ViewBase extends Component {
     })
     isCache: boolean = false;
 
+    //#region EDITOR
     onRestore() {
         this.checkEditorComponent(true);
-    }
-
-    protected onLoad() {
-        this.checkEditorComponent();
     }
 
     private checkEditorComponent(isTitle = false) {
@@ -94,6 +91,12 @@ export class ViewBase extends Component {
                 title.string = this.viewName.toLocaleLowerCase();
             }
         }
+    }
+
+    //#endregion
+
+    protected onLoad() {
+        this.checkEditorComponent();
     }
 
     protected doClose: (name: string, data?: any) => void = null;
