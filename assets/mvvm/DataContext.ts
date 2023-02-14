@@ -8,7 +8,7 @@
 import { _decorator, Component, Node, Enum, CCClass } from 'cc';
 import { EDITOR } from 'cc/env';
 import { Locator } from '../common/Locator';
-import { observe } from '../common/ReactiveObserve';
+import { observe, Operation } from '../common/ReactiveObserve';
 import { decoratorData, DecoratorDataKind } from './MVVM';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
@@ -186,8 +186,10 @@ export class DataContext extends Component {
         this._data = this.upperDataContext[this._bindingName];
 
         // 设置观察函数
-        observe((() => {
+        observe(((operation: Operation) => {
             this._data = this.upperDataContext[this._bindingName];
+            if (!operation) return;
+
             this._updateCallbackList.forEach((callback) => {
                 callback();
             });

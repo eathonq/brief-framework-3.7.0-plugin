@@ -8,7 +8,7 @@
 import { _decorator, Node, Component, Enum, CCClass } from 'cc';
 import { EDITOR } from 'cc/env';
 import { Locator } from '../common/Locator';
-import { observe, unobserve } from '../common/ReactiveObserve';
+import { observe, Operation, unobserve } from '../common/ReactiveObserve';
 import { BindingMode } from './Binding';
 import { DataContext } from "./DataContext";
 import { ItemsSource } from './ItemsSource';
@@ -246,8 +246,10 @@ export class Visibility extends Component {
         this._data = this.upperDataContext[this._bindingName];
         if (this._isObservable) {
             // 设置观察函数
-            this._reaction = observe((() => {
+            this._reaction = observe(((operation: Operation) => {
                 let data = this.upperDataContext[this._bindingName];
+                if (!operation) return;
+
                 this.setComponentValue(data);
             }).bind(this));
         }

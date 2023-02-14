@@ -52,17 +52,14 @@ export class ItemsSource extends DataContext {
         this._data = this.upperDataContext[this._bindingName];
 
         // 设置观察函数
-        observe((() => {
+        observe(((operation:Operation) => {
             this._data = this.upperDataContext[this._bindingName];
-            this._updateCallbackList.forEach((callback) => {
-                callback();
-            });
-
             // 设置数组观察函数
             observe(((operation: Operation) => {
                 // 更新数组
                 let length = this._data.length;
                 if (!operation) return;
+                
                 let type = operation.type;
                 if (type == 'add') {
                     let target = operation.target as any[];
@@ -72,7 +69,12 @@ export class ItemsSource extends DataContext {
                     this.deleteItem(operation.oldValue);
                 }
             }).bind(this));
-
+            
+            if(!operation) return;
+            
+            this._updateCallbackList.forEach((callback) => {
+                callback();
+            });
         }).bind(this));
 
         this.cleanItems();
