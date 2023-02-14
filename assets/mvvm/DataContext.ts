@@ -142,7 +142,7 @@ export class DataContext extends Component {
         }
     }
 
-    private selectedBindItemsType() {
+    protected selectedBindItemsType() {
         // 设置 EDITOR 状态下，绑定属性
         this.path = `${this.parent.path}.${this._bindingName}.${this._bindingType}`;
     }
@@ -171,10 +171,11 @@ export class DataContext extends Component {
     }
 
     private initParentDataContext() {
-        if (this.parent) return;
-        this.parent = DataContext.lookUp(this.node, false);
         if (!this.parent) {
-            console.warn(`path:${Locator.getNodeFullPath(this.node)} `, `组件 ItemsSource `, '找不到 DataContext');
+            this.parent = DataContext.lookUp(this.node, false);
+            if (!this.parent) {
+                console.warn(`path:${Locator.getNodeFullPath(this.node)} `, `组件 ItemsSource `, '找不到 DataContext');
+            }
         }
 
         this.parent.addUpdateCallback(this.onUpdateData.bind(this));

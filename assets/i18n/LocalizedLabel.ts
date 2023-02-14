@@ -42,7 +42,6 @@ export class LocalizedLabel extends Component {
 
     @property({ visible: false })
     private watchPath: string = "";
-
     @property({
         displayName: 'Watch Path',
         visible: true,

@@ -5,12 +5,12 @@
  * update = 2023-02-12 13:06
  */
 
-import { _decorator, Node, instantiate, NodePool } from 'cc';
+import { _decorator, Node, instantiate, NodePool, Enum, CCClass } from 'cc';
 import { EDITOR } from 'cc/env';
 import { Locator } from '../common/Locator';
-import { observe, Operation } from '../common/ReactiveObserve';
+import { observe, Operation, reactive } from '../common/ReactiveObserve';
 import { DataContext } from "./DataContext";
-import { DecoratorDataKind } from './MVVM';
+import { decoratorData, DecoratorDataKind } from './MVVM';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /** 
@@ -27,6 +27,92 @@ export class ItemsSource extends DataContext {
         tooltip: '模板节点'
     })
     private template: Node = null;
+
+    @property({ visible: false })
+    private _isSelected: boolean = false;
+    @property({
+        tooltip: '是否绑定选中项',
+        displayName: 'Is Selected',
+        visible: true,
+    })
+    private get isSelected() {
+        return this._isSelected;
+    }
+    private set isSelected(value) {
+        this._isSelected = value;
+    }
+
+    @property
+    private _bindingSelectedName = "";
+    private _bindingSelectedEnums: { name: string, value: number }[] = [];
+    private _bindingSelected = 0;
+    /** 绑定选中项 */
+    @property({
+        tooltip: '绑定选中项',
+        type: Enum({}),
+        serializable: true,
+        visible() {
+            return this._isSelected;
+        }
+    })
+    private get bindingSelected() {
+        return this._bindingSelected;
+    }
+    private set bindingSelected(value) {
+        this._bindingSelected = value;
+        if (this._bindingSelectedEnums[value]) {
+            this._bindingSelectedName = this._bindingSelectedEnums[value].name;
+        }
+    }
+
+    //#region EDITOR
+    protected selectedBindItemsType() {
+        super.selectedBindItemsType();
+
+        this.updateEditorBindingSelectedEnums();
+    }
+
+    private updateEditorBindingSelectedEnums() {
+        // 设置绑定属性
+        let dataList = decoratorData.getPropertyList(this.parent.path);
+        let data = dataList.find((item) => { return item.name === this._bindingName; });
+        if (dataList && data) {
+            const newEnums = [];
+            let count = 0;
+            dataList.forEach((item) => {
+                // 仅显示对象类型
+                if (item.type == data.type && item.kind != DecoratorDataKind.Array) {
+                    newEnums.push({ name: item.name, value: count++ });
+                }
+            });
+
+            this._bindingSelectedEnums = newEnums;
+            CCClass.Attr.setClassAttr(this, 'bindingSelected', 'enumList', newEnums);
+        }
+        else {
+            this._bindingSelectedEnums = [];
+            CCClass.Attr.setClassAttr(this, 'bindingSelected', 'enumList', []);
+        }
+
+        // 设置绑定数据枚举默认值
+        if (this._bindingSelectedName !== '') {
+            let findIndex = this._bindingSelectedEnums.findIndex((item) => { return item.name === this._bindingSelectedName; });
+            if (findIndex === -1) {
+                console.warn(`PATH ${Locator.getNodeFullPath(this.node)} `, `组件Binding绑定 ${this._bindingSelectedName} 已经不存在`);
+                // 如果只有一个枚举，就设置为默认值
+                if (this._bindingSelectedEnums.length == 1) {
+                    this.bindingSelected = 0;
+                }
+            }
+            else {
+                this.bindingSelected = findIndex;
+            }
+        }
+        else {
+            this.bindingSelected = 0;
+        }
+    }
+    //#endregion
 
     /**
      * 子类重写此方法需要调用 super.onLoad()
@@ -52,14 +138,14 @@ export class ItemsSource extends DataContext {
         this._data = this.upperDataContext[this._bindingName];
 
         // 设置观察函数
-        observe(((operation:Operation) => {
+        observe(((operation: Operation) => {
             this._data = this.upperDataContext[this._bindingName];
             // 设置数组观察函数
             observe(((operation: Operation) => {
                 // 更新数组
                 let length = this._data.length;
                 if (!operation) return;
-                
+
                 let type = operation.type;
                 if (type == 'add') {
                     let target = operation.target as any[];
@@ -69,9 +155,9 @@ export class ItemsSource extends DataContext {
                     this.deleteItem(operation.oldValue);
                 }
             }).bind(this));
-            
-            if(!operation) return;
-            
+
+            if (!operation) return;
+
             this._updateCallbackList.forEach((callback) => {
                 callback();
             });
@@ -122,6 +208,14 @@ export class ItemsSource extends DataContext {
         }
         this._content.insertChild(node, index);
         this._nodeDataList.push({ node, data });
+
+        if (this._isSelected) {
+            node.off(Node.EventType.TOUCH_END);
+            node.on(Node.EventType.TOUCH_END, () => {
+                let proxy = reactive(data);
+                this.parent.dataContext[this._bindingSelectedName] = proxy;
+            }, this);
+        }
     }
 
     private deleteItem(data: any) {

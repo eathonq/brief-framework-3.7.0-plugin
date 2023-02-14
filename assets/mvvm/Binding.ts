@@ -252,8 +252,8 @@ export class Binding extends Component {
     /** 更新绑定数据枚举 */
     private updateEditorBindingEnums() {
         let isFunc = this.componentName === 'cc.Button';
+         // 设置绑定属性
         let dataList = isFunc ? decoratorData.getFunctionList(this.parent.path) : decoratorData.getPropertyList(this.parent.path);
-        // 更新绑定数据枚举
         if (dataList) {
             const newEnums = [];
             let count = 0;
@@ -338,13 +338,13 @@ export class Binding extends Component {
     }
 
     private initParentDataContext() {
-        if (this.parent) return;
-
-        this.parent = DataContext.lookUp(this.node, true);
-        if (!this.parent) {
-            console.warn(`path:${Locator.getNodeFullPath(this.node)} `, `组件 ItemsSource `, '找不到 DataContext');
+        if (!this.parent){
+            this.parent = DataContext.lookUp(this.node, true);
+            if (!this.parent) {
+                console.warn(`path:${Locator.getNodeFullPath(this.node)} `, `组件 ItemsSource `, '找不到 DataContext');
+            }
         }
-
+        
         this.parent.addUpdateCallback(this.onUpdateData.bind(this));
     }
 

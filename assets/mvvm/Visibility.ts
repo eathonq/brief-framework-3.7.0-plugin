@@ -218,11 +218,11 @@ export class Visibility extends Component {
     }
 
     private initParentDataContext() {
-        if (this.parent) return;
-
-        this.parent = DataContext.lookUp(this.node, true);
         if (!this.parent) {
-            console.warn(`path:${Locator.getNodeFullPath(this.node)} `, `组件 ItemsSource `, '找不到 DataContext');
+            this.parent = DataContext.lookUp(this.node, true);
+            if (!this.parent) {
+                console.warn(`path:${Locator.getNodeFullPath(this.node)} `, `组件 ItemsSource `, '找不到 DataContext');
+            }
         }
 
         this.parent.addUpdateCallback(this.onUpdateData.bind(this));
