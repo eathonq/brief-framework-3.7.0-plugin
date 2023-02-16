@@ -413,10 +413,10 @@ function queueReactionsForOperation(operation: Operation) {
 }
 
 /** 把函数包裹为观察函数 */
-function runReactionWrap(reaction: ReactionFunction, fn: Function, context: any, args: any[]) {
+function runReactionWrap(reaction: ReactionFunction, fn: Function, thisArgument: any, args: any[]) {
     // 已经取消观察了 就直接执行原函数
     if (reaction.unobserved) {
-        return Reflect.apply(fn, context, args);
+        return Reflect.apply(fn, thisArgument, args);
     }
 
     // 如果观察函数是已经在运行 直接返回
@@ -432,7 +432,7 @@ function runReactionWrap(reaction: ReactionFunction, fn: Function, context: any,
         // 把当前的观察函数推入栈内 开始观察响应式proxy
         reactionStack.push(reaction);
         // 运行用户传入的函数 这个函数里访问proxy就会收集reaction函数作为依赖了
-        return Reflect.apply(fn, context, args);
+        return Reflect.apply(fn, thisArgument, args);
     } finally {
         // 运行完了永远要出栈
         reactionStack.pop();
@@ -509,13 +509,14 @@ export function raw<T extends object>(proxy: T): T {
  * 在传入的函数里去访问响应式的 proxy 会收集传入的函数作为依赖
  * 下次访问的key发生变化的时候 就会重新运行这个函数
  * @param fn 观察函数
+ * @param thisArgument this指向
  * @returns 观察函数，让外部也可以手动调用
  */
-export function observe(fn: (operation?: Operation) => void): ReactionFunction {
+export function observe(fn: (operation?: Operation) => void, thisArgument?: any): ReactionFunction {
     // reaction是包装了原始函数之后的观察函数
     // 在runReactionWrap的上下文中执行原始函数 可以收集到依赖。
     const reaction: ReactionFunction = (...args: any[]) => {
-        return runReactionWrap(reaction, fn, this, args);
+        return runReactionWrap(reaction, fn, thisArgument || this, args);
     }
 
     // 先执行一遍reaction

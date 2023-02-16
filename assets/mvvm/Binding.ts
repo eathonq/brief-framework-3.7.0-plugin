@@ -2,32 +2,30 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-02-12 13:06
+ * update = 2023-02-15 18:45
  */
 
-import { _decorator, Node, EditBox, Component, Enum, Toggle, Slider, PageView, Sprite, ToggleContainer, EventHandler, Button, CCClass } from 'cc';
+import { _decorator, Node, EditBox, Component, Enum, Toggle, Slider, PageView, Sprite, ToggleContainer, EventHandler, Button, CCClass, Label, RichText, ProgressBar } from 'cc';
 import { EDITOR } from 'cc/env';
 import { Locator } from '../common/Locator';
-import { observe, Operation, unobserve } from '../common/ReactiveObserve';
+import { observe, unobserve } from '../common/ReactiveObserve';
 import { ResourcesUtil } from '../common/ResourcesUtil';
 import { DataContext } from "./DataContext";
-import { ItemsSource } from './ItemsSource';
-import { decoratorData, DecoratorDataKind } from './MVVM';
+import { decoratorData, DataKind } from './MVVM';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /** 组件检测数组 */
-const COMP_ARRAY_CHECK = [
-    //['绑定组件名','绑定属性名']
-    ['cc.Label', 'string'],
-    ['cc.RichText', 'string'],
-    ['cc.EditBox', 'string'],
-    ['cc.Toggle', 'isChecked'], // Toggle继承于Button，所以必须放在Button前面
-    ['cc.Button', 'click'],
-    ['cc.Slider', 'progress'],
-    ['cc.ProgressBar', 'progress'],
-    ['cc.PageView', 'CurrentPageIndex'],
-    ['cc.Sprite', 'SpriteFrame'],
-    ['cc.ToggleContainer', 'CheckedIndex'], // 仅支持 allowSwitchOff = false
+const COMP_ARRAY_CHECK: { type: any, property: string, data_kind: DataKind[] }[] = [
+    { type: Label, property: 'string', data_kind: [DataKind.String, DataKind.Number, DataKind.Boolean] },
+    { type: RichText, property: 'string', data_kind: [DataKind.String, DataKind.Number, DataKind.Boolean] },
+    { type: EditBox, property: 'string', data_kind: [DataKind.String, DataKind.Number, DataKind.Boolean] },
+    { type: Toggle, property: 'isChecked', data_kind: [DataKind.Boolean] }, // Toggle继承于Button，所以必须放在Button前面
+    { type: Button, property: 'click', data_kind: [DataKind.Function] },
+    { type: Slider, property: 'progress', data_kind: [DataKind.Number] },
+    { type: ProgressBar, property: 'progress', data_kind: [DataKind.Number] },
+    { type: PageView, property: 'CurrentPageIndex', data_kind: [DataKind.Number] },
+    { type: Sprite, property: 'SpriteFrame', data_kind: [DataKind.String] },
+    { type: ToggleContainer, property: 'CheckedIndex', data_kind: [DataKind.Number] }, // 仅支持 allowSwitchOff = false
 ];
 
 /** 绑定模式 */
@@ -42,7 +40,10 @@ export enum BindingMode {
     OneWayToSource = 3,
 }
 
-/** 数据绑定组件 */
+/** 
+ * 数据绑定组件
+ * 绑定上级数据中的基础类型数据（String、Number、Boolean、Function）到组件上
+ */
 @ccclass('brief.Binding')
 @help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/mvvm-mvvm-kuang-jia/binding')
 @executeInEditMode
@@ -65,19 +66,21 @@ export class Binding extends Component {
     })
     private componentProperty: string = "";
 
+    /** 组件上需要监听的属性的数据类型 */
+    private componentCheckTypes: DataKind[] = [];
+
     /** 数据上下文路径 */
-    @property({ visible: false })
-    private parent: DataContext = null;
+    @property(DataContext)
+    private _parent: DataContext = null;
     @property({
+        type: DataContext,
         tooltip: '数据上下文',
-        displayName: 'DataContext',
-        visible: true,
     })
-    private get _parent() {
-        return this.parent;
+    private get parent() {
+        return this._parent;
     }
-    private set _parent(value) {
-        this.parent = value;
+    private set parent(value) {
+        this._parent = value;
         this.updateEditorBindingEnums();
     }
 
@@ -87,9 +90,8 @@ export class Binding extends Component {
     private _mode = 0;
     /** 绑定模式 */
     @property({
-        tooltip: '绑定模式:\n TwoWay: 双向绑定(Model<->View);\n OneWay: 单向绑定(Model->View);\n OneTime: 一次单向绑定(Model->View);\n OneWayToSource: 单向绑定(Model<-View)。',
         type: Enum({}),
-        serializable: true,
+        tooltip: '绑定模式:\n TwoWay: 双向绑定(Model<->View);\n OneWay: 单向绑定(Model->View);\n OneTime: 一次单向绑定(Model->View);\n OneWayToSource: 单向绑定(Model<-View)。',
     })
     private get mode() {
         return this._mode;
@@ -102,14 +104,13 @@ export class Binding extends Component {
     }
 
     @property
-    private _bindingName = "";
-    private _bindingEnums: { name: string, value: number }[] = [];
+    private _bindingName = ""; // 挂载 @property 属性值保存到场景等资源文件中，用于 binding 数据恢复
+    private _bindingEnums: { name: string, value: number, type: string }[] = [];
     private _binding = 0;
     /** 绑定属性 */
     @property({
-        tooltip: '绑定属性',
         type: Enum({}),
-        serializable: true,
+        tooltip: '绑定属性',
     })
     private get binding() {
         return this._binding;
@@ -118,6 +119,7 @@ export class Binding extends Component {
         this._binding = value;
         if (this._bindingEnums[value]) {
             this._bindingName = this._bindingEnums[value].name;
+            this.selectedBinding();
         }
     }
 
@@ -143,26 +145,30 @@ export class Binding extends Component {
 
     //#region EDITOR
     onRestore() {
-        this.parent = null;
+        this._parent = null;
         this.checkEditorComponent();
     }
 
     private checkEditorComponent() {
         this.initParentDataContext();
 
+        // 上下文数据异常，则不继续执行
+        if (!this._parent) return;
+
         // 组件查找
-        let checkArray = COMP_ARRAY_CHECK;
         this.componentName = "";
         this.componentProperty = "";
-        for (const item of checkArray) {
-            if (this.node.getComponent(item[0])) {
-                this.componentName = item[0];
-                this.componentProperty = item[1];
+        this.componentCheckTypes = [];
+        for (const item of COMP_ARRAY_CHECK) {
+            if (this.node.getComponent(item.type)) {
+                this.componentName = item.type.name;
+                this.componentProperty = item.property;
+                this.componentCheckTypes = item.data_kind;
                 break;
             }
         }
         if (this.componentName == "") {
-            console.warn(`path:${Locator.getNodeFullPath(this.node)} `, `组件 Binding `, '找不到组件');
+            console.warn("Binding 组件未找到对应的组件");
             return;
         }
 
@@ -175,10 +181,10 @@ export class Binding extends Component {
     /** 默认组件设置 */
     private defaultEditorComponent() {
         switch (this.componentName) {
-            case 'cc.Button':
+            case Button.name:
                 this._customEventData_visible = true;
                 break;
-            case 'cc.ToggleContainer':
+            case ToggleContainer.name:
                 const container = this.node.getComponent(ToggleContainer);
                 container.allowSwitchOff = false;
                 break;
@@ -192,24 +198,24 @@ export class Binding extends Component {
         const newEnums = [];
         let count = 0;
         switch (this.componentName) {
-            case 'cc.Label':
+            case Label.name:
                 newEnums.push(...[
                     { name: 'OneWay', value: count++, mode: BindingMode.OneWay },
                     { name: 'OneTime', value: count++, mode: BindingMode.OneTime },
                 ]);
                 break;
-            case 'cc.Button':
+            case Button.name:
                 newEnums.push(...[
                     { name: 'OneWayToSource', value: count++, mode: BindingMode.OneWayToSource },
                 ]);
                 break;
-            case 'cc.ProgressBar':
+            case ProgressBar.name:
                 newEnums.push(...[
                     { name: 'OneWay', value: count++, mode: BindingMode.OneWay },
                     { name: 'OneTime', value: count++, mode: BindingMode.OneTime },
                 ]);
                 break;
-            case 'cc.Sprite':
+            case Sprite.name:
                 newEnums.push(...[
                     { name: 'OneWay', value: count++, mode: BindingMode.OneWay },
                     { name: 'OneTime', value: count++, mode: BindingMode.OneTime },
@@ -230,15 +236,11 @@ export class Binding extends Component {
 
         // 设置绑定模式枚举默认值
         if (this._bindingMode != -1) {
-            let findIndex = newEnums.findIndex((item) => {
+            let findIndex = this._modeEnums.findIndex((item) => {
                 return item.mode == this._bindingMode;
             });
             if (findIndex === -1) {
-                console.warn(`path:${Locator.getNodeFullPath(this.node)} `, `组件 Binding `, '绑定模式枚举默认值设置失败');
-                // 如果只有一个枚举，就设置为默认值
-                if (this._bindingEnums.length == 1) {
-                    this.binding = 0;
-                }
+                this.mode = 0;
             }
             else {
                 this.mode = findIndex;
@@ -251,36 +253,40 @@ export class Binding extends Component {
 
     /** 更新绑定数据枚举 */
     private updateEditorBindingEnums() {
-        let isFunc = this.componentName === 'cc.Button';
-         // 设置绑定属性
-        let dataList = isFunc ? decoratorData.getFunctionList(this.parent.path) : decoratorData.getPropertyList(this.parent.path);
+        // 获取绑定属性
+        const newEnums = [];
+        let isFunc = this.componentName === Button.name;
+        let dataList = isFunc ? decoratorData.getFunctionList(this._parent.bindingType) : decoratorData.getPropertyList(this._parent.bindingType);
         if (dataList) {
-            const newEnums = [];
             let count = 0;
             dataList.forEach((item) => {
                 if (isFunc) {
-                    if (item.kind === DecoratorDataKind.Function) {
-                        newEnums.push({ name: item.name, value: count++ });
+                    if (item.kind === DataKind.Function) {
+                        newEnums.push({ name: item.name, value: count++, type: item.type });
                     }
                 } else {
-                    if (item.kind === DecoratorDataKind.Simple) {
-                        newEnums.push({ name: item.name, value: count++ });
+                    if (this.componentCheckTypes.indexOf(item.kind) != -1) {
+                        newEnums.push({ name: item.name, value: count++, type: item.type });
                     }
                 }
             });
-            this._bindingEnums = newEnums;
-            CCClass.Attr.setClassAttr(this, 'binding', 'enumList', newEnums);
         }
-        else {
-            this._bindingEnums = [];
-            CCClass.Attr.setClassAttr(this, 'binding', 'enumList', []);
+        // 更新绑定数据枚举
+        this._bindingEnums = newEnums;
+        CCClass.Attr.setClassAttr(this, 'binding', 'enumList', newEnums);
+
+        // 如果绑定数据枚举为空，则警告
+        if (this._bindingEnums.length === 0) {
+            console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件 Binding 绑定未找到合适的数据（String,Number,Boolean）`);
         }
 
         // 设置绑定数据枚举默认值
         if (this._bindingName !== '') {
-            let findIndex = this._bindingEnums.findIndex((item) => { return item.name === this._bindingName; });
+            let findIndex = this._bindingEnums.findIndex((item) => {
+                return item.name === this._bindingName;
+            });
             if (findIndex === -1) {
-                console.warn(`PATH ${Locator.getNodeFullPath(this.node)} `, `组件Binding绑定 ${this._bindingName} 已经不存在`);
+                console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件Binding绑定 ${this._bindingName} 已经不存在`);
                 // 如果只有一个枚举，就设置为默认值
                 if (this._bindingEnums.length == 1) {
                     this.binding = 0;
@@ -295,6 +301,18 @@ export class Binding extends Component {
         }
     }
 
+    protected selectedBinding() {
+        if (this._parent) {
+            if (this.componentName === Button.name) return;
+
+            let path = this._parent.path;
+            // 通过地址获取默认值
+            let data = decoratorData.getDefaultInEditor(`${path}.${this._bindingName}`);
+            if (data != null) {
+                this.setComponentValue(data);
+            }
+        }
+    }
     //#endregion
 
     protected onLoad() {
@@ -304,6 +322,10 @@ export class Binding extends Component {
         }
 
         this.initParentDataContext();
+
+        // 上下文数据异常，则不继续执行
+        if (!this._parent) return;
+
         // 设置绑定模式
         switch (this._bindingMode) {
             case BindingMode.TwoWay:
@@ -338,40 +360,41 @@ export class Binding extends Component {
     }
 
     private initParentDataContext() {
-        if (!this.parent){
-            this.parent = DataContext.lookUp(this.node, true);
-            if (!this.parent) {
-                console.warn(`path:${Locator.getNodeFullPath(this.node)} `, `组件 ItemsSource `, '找不到 DataContext');
+        if (!this._parent) {
+            this._parent = DataContext.lookUp(this.node, true);
+            if (!this._parent) {
+                console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件 Binding 找不到上级 DataContext`);
+                return;
             }
         }
-        
-        this.parent.addUpdateCallback(this.onUpdateData.bind(this));
+
+        this._parent.addUpdateCallback(this.onUpdateData.bind(this));
     }
 
     private _isObservable = false;
     /** 观察函数 */
     private _reaction = null;
     private onUpdateData() {
-        if (!this.parent.dataContext) return;
-
         // 数组类型数据，重新设置绑定属性（重新定位数组元素）
-        if (this.parent instanceof ItemsSource) {
-            let index = this.parent.getItemIndex(this.node);
-            this.upperDataContext = this.parent.dataContext[index];
+        if (this._parent.bindDataKind === DataKind.Array) {
+            let index = this._parent.getItemIndex(this.node);
+            this.upperDataContext = this._parent.dataContext[index];
         }
         else {
-            this.upperDataContext = this.parent.dataContext;
+            this.upperDataContext = this._parent.dataContext;
         }
+
+        if (!this.upperDataContext) return;
 
         this._data = this.upperDataContext[this._bindingName];
         if (this._isObservable) {
             // 设置观察函数
-            this._reaction = observe(((operation: Operation) => {
+            this._reaction = observe((operation) => {
                 let data = this.upperDataContext[this._bindingName];
                 if (!operation) return;
 
                 this.setComponentValue(data);
-            }).bind(this));
+            }, this);
         }
 
         this.setComponentValue(this._data);
@@ -381,29 +404,41 @@ export class Binding extends Component {
         if (value === undefined || value === null) return;
 
         switch (this.componentName) {
-            case 'cc.PageView':
-                // PageView 组件在初始化时候，设置当前页会无效，所以延迟设置
-                this.scheduleOnce(() => {
-                    this.node.getComponent(PageView).setCurrentPageIndex(value);
-                }, 0);
+            case Label.name:
+                this.node.getComponent(Label).string = `${value}`;
                 break;
-            case 'cc.Sprite':
-                ResourcesUtil.setSprite(this.node.getComponent(Sprite), value);
+            case RichText.name:
+                this.node.getComponent(RichText).string = `${value}`;
                 break;
-            case 'cc.Button':
+            case EditBox.name:
+                this.node.getComponent(EditBox).string = `${value}`;
+                break;
+            case Toggle.name:
+                this.node.getComponent(Toggle).isChecked = Boolean(value);
+                break;
+            case Button.name:
                 // 按钮的点击事件不做处理，Button绑定模式为BindingMode.OneWayToSource。
                 break;
-            case 'cc.ToggleContainer':
-                let toggles = this.node.getComponent(ToggleContainer).getComponentsInChildren(Toggle);
-                for (let i = 0; i < toggles.length; i++) {
-                    toggles[i].isChecked = i === value;
-                }
+            case Slider.name:
+                this.node.getComponent(Slider).progress = Number(value);
                 break;
-            default:
-                let component = this.node.getComponent(this.componentName);
-                // 用undefined判断，自有属性和继承属性均可判断
-                if (component[this.componentProperty] !== undefined) {
-                    component[this.componentProperty] = value;
+            case ProgressBar.name:
+                this.node.getComponent(ProgressBar).progress = Number(value);
+                break;
+            case PageView.name:
+                // PageView 组件在初始化时候，设置当前页会无效，所以延迟设置
+                this.scheduleOnce(() => {
+                    this.node.getComponent(PageView).setCurrentPageIndex(Number(value));
+                }, 0);
+                break;
+            case Sprite.name:
+                ResourcesUtil.setSprite(this.node.getComponent(Sprite), `${value}`);
+                break;
+            case ToggleContainer.name:
+                let toggles = this.node.getComponent(ToggleContainer).getComponentsInChildren(Toggle);
+                let index = Number(value);
+                for (let i = 0; i < toggles.length; i++) {
+                    toggles[i].isChecked = i === index;
                 }
                 break;
         }
@@ -418,37 +453,37 @@ export class Binding extends Component {
 
     private onComponentCallback() {
         switch (this.componentName) {
-            case 'cc.EditBox':
+            case EditBox.name:
                 let editBox = this.node.getComponent(EditBox);
                 editBox.node.on(EditBox.EventType.TEXT_CHANGED, (editBox: EditBox) => {
                     this.upperDataContext[this._bindingName] = editBox.string;
                 }, this);
                 break;
-            case 'cc.Toggle':
+            case Toggle.name:
                 let toggle = this.node.getComponent(Toggle);
                 toggle.node.on(Toggle.EventType.TOGGLE, (toggle: Toggle) => {
                     this.upperDataContext[this._bindingName] = toggle.isChecked;
                 }, this);
                 break;
-            case 'cc.Button':
+            case Button.name:
                 let button = this.node.getComponent(Button);
                 button.node.on(Button.EventType.CLICK, (button: Button) => {
                     this.upperDataContext[this._bindingName](this.customEventData);
                 });
                 break;
-            case 'cc.Slider':
+            case Slider.name:
                 let slider = this.node.getComponent(Slider);
                 slider.node.on('slide', (slider: Slider) => {
                     this.upperDataContext[this._bindingName] = slider.progress;
                 }, this);
                 break;
-            case 'cc.PageView':
+            case PageView.name:
                 let pageView = this.node.getComponent(PageView);
                 pageView.node.on(PageView.EventType.PAGE_TURNING, (pageView: PageView) => {
                     this.upperDataContext[this._bindingName] = pageView.getCurrentPageIndex();
                 }, this);
                 break;
-            case 'cc.ToggleContainer':
+            case ToggleContainer.name:
                 const containerEventHandler = new EventHandler();
                 containerEventHandler.target = this.node; // 这个 node 节点是你的事件处理代码组件所属的节点
                 containerEventHandler.component = 'brief.Binding';// 这个是脚本类名
@@ -462,8 +497,8 @@ export class Binding extends Component {
     }
 
     private onToggleGroup(event: any, customEventData: string) {
-        let parent = event.node.parent;
-        if (!parent) return;
+        let parent: Node = event.node.parent;
+        if (!parent || EDITOR) return;
 
         // 获取位置索引
         let index = parent.children.indexOf(event.node);

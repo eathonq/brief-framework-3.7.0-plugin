@@ -27,8 +27,8 @@ export class ScrollViewDirection extends Component {
     })
     private _type: ScrollViewDirectionType = ScrollViewDirectionType.VERTICAL;
     @property({
+        type: Enum(ScrollViewDirectionType),
         tooltip: '滚动视图方向',
-        type: Enum(ScrollViewDirectionType)
     })
     get type(): ScrollViewDirectionType {
         return this._type;
@@ -41,35 +41,35 @@ export class ScrollViewDirection extends Component {
     @property({
         type: ScrollView,
         readonly: true,
-        tooltip: '滚动视图'
+        tooltip: '滚动视图',
     })
     private scrollView: ScrollView = null;
 
     @property({
         type: ScrollBar,
         readonly: true,
-        tooltip: '滚动视图滚动条'
+        tooltip: '滚动视图滚动条',
     })
     private scrollBar: ScrollBar = null;
 
     @property({
         type: Node,
         readonly: true,
-        tooltip: '滚动视图滚动节点'
+        tooltip: '滚动视图滚动节点',
     })
     private bar: Node = null;
 
     @property({
         type: Node,
         readonly: true,
-        tooltip: '滚动视图可视区域'
+        tooltip: '滚动视图可视区域',
     })
     private view: Node = null;
 
     @property({
         type: Node,
         readonly: true,
-        tooltip: '滚动视图内容'
+        tooltip: '滚动视图内容',
     })
     private content: Node = null;
 

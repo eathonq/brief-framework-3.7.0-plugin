@@ -174,7 +174,6 @@ class LanguageData {
         // walk all nodes with localize label and update
         const allLocalizedLabels: any[] = [];
         for (let i = 0; i < rootNodes.length; ++i) {
-            //let labels = rootNodes[i].getComponentsInChildren('brief.LocalizedLabel');
             let labels = rootNodes[i].getComponentsInChildren(LocalizedLabel);
             Array.prototype.push.apply(allLocalizedLabels, labels);
         }
@@ -187,7 +186,6 @@ class LanguageData {
         // walk all nodes with localize sprite and update
         const allLocalizedSprites: any[] = [];
         for (let i = 0; i < rootNodes.length; ++i) {
-            //let sprites = rootNodes[i].getComponentsInChildren('brief.LocalizedSprite');
             let sprites = rootNodes[i].getComponentsInChildren(LocalizedSprite);
             Array.prototype.push.apply(allLocalizedSprites, sprites);
         }

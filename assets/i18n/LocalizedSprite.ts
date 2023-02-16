@@ -7,6 +7,7 @@
 
 import { _decorator, Component, Node, Sprite } from 'cc';
 import { EDITOR } from 'cc/env';
+import { Locator } from '../common/Locator';
 import { i18n } from './LanguageData';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
@@ -22,31 +23,33 @@ export class LocalizedSprite extends Component {
 
     @property({
         tooltip: '绑定组件的名字',
+        displayName: 'Component',
         readonly: true,
+        serializable: false,
     })
-    private componentName: string = "";
+    private componentName: string = Sprite.name;
 
     @property({
         tooltip: '组件上需要监听的属性',
+        displayName: 'Property',
         readonly: true,
+        serializable: false,
     })
-    private componentProperty: string = "";
+    private componentProperty: string = "spriteFrame";
 
-    @property({ visible: false })
-    private watchPath: string = "";
-
+    @property
+    private _watchPath: string = "";
     @property({
-        displayName: 'WatchPath',
         visible() {
             return this.isWatchPath;
         },
         tooltip: '绑定路径'
     })
-    private get _watchPath() {
-        return this.watchPath;
+    private get watchPath() {
+        return this._watchPath;
     }
-    private set _watchPath(value) {
-        this.watchPath = value;
+    private set watchPath(value) {
+        this._watchPath = value;
         this.resetValue();
     }
 
@@ -73,9 +76,9 @@ export class LocalizedSprite extends Component {
     private checkEditorComponent() {
         if (EDITOR) {
             let com = this.node.getComponent(Sprite);
-            if (com) {
-                this.componentName = "Sprite";
-                this.componentProperty = "spriteFrame";
+            if (!com) {
+                console.warn('LocalizedSprite 组件必须挂载在 Sprite 组件上');
+                return;
             }
         }
     }
@@ -92,11 +95,11 @@ export class LocalizedSprite extends Component {
 
     resetValue() {
         let sprite = this.node.getComponent(Sprite);
-        if (!sprite || !sprite.isValid) return;
+        if (!sprite) return;
 
         // 使用路径加载图片
         if (this.isWatchPath) {
-            i18n.s(this.watchPath).then(spriteFrame => {
+            i18n.s(this._watchPath).then(spriteFrame => {
                 if (spriteFrame) {
                     sprite.spriteFrame = spriteFrame;
                 }

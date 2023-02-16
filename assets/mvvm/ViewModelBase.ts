@@ -11,8 +11,7 @@ import { DataContext } from './DataContext';
 
 /**
  * 视图模型基类
- * @info UI 组件绑定数据源
- * 提供 ViewModelBase 间互相通信交互功能
+ * 数据绑定的根节点
  */
 export class ViewModelBase extends DataContext {
     /**
@@ -27,14 +26,15 @@ export class ViewModelBase extends DataContext {
      */
     protected onLoad(data?: any) {
         if (!data) {
-            console.error(`ViewModelBase: ${this.path} data is null`);
+            console.error(`ViewModelBase: ${this.constructor.name} onLoad data is null`);
             return;
         }
 
         this._isRoot = true;
-        this.path = data.constructor.name;
+        this._bindingType = data.constructor.name;
+        this.path = this._bindingType;
         this.parent = this;
-        
+
         super.onLoad();
 
         if (EDITOR) return;

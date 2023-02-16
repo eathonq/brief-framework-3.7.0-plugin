@@ -2,19 +2,20 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-02-12 13:06
+ * update = 2023-02-15 18:45
  */
 
 import { _decorator, Node, instantiate, NodePool, Enum, CCClass } from 'cc';
 import { EDITOR } from 'cc/env';
 import { Locator } from '../common/Locator';
-import { observe, Operation, reactive } from '../common/ReactiveObserve';
+import { observe, reactive } from '../common/ReactiveObserve';
 import { DataContext } from "./DataContext";
-import { decoratorData, DecoratorDataKind } from './MVVM';
+import { decoratorData, DataKind } from './MVVM';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /** 
  * 数据集合绑定组件
+ * 绑定上级数据中的集合数据到组件上
  */
 @ccclass('brief.ItemsSource')
 @help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/mvvm-mvvm-kuang-jia/itemssource')
@@ -24,16 +25,14 @@ export class ItemsSource extends DataContext {
 
     @property({
         type: Node,
-        tooltip: '模板节点'
+        tooltip: '模板节点',
     })
     private template: Node = null;
 
-    @property({ visible: false })
+    @property
     private _isSelected: boolean = false;
     @property({
         tooltip: '是否绑定选中项',
-        displayName: 'Is Selected',
-        visible: true,
     })
     private get isSelected() {
         return this._isSelected;
@@ -43,14 +42,13 @@ export class ItemsSource extends DataContext {
     }
 
     @property
-    private _bindingSelectedName = "";
+    private _bindingSelectedName = ""; // 挂载 @property 属性值保存到场景等资源文件中，用于 binding 数据恢复
     private _bindingSelectedEnums: { name: string, value: number }[] = [];
     private _bindingSelected = 0;
     /** 绑定选中项 */
     @property({
-        tooltip: '绑定选中项',
         type: Enum({}),
-        serializable: true,
+        tooltip: '绑定选中项',
         visible() {
             return this._isSelected;
         }
@@ -66,39 +64,40 @@ export class ItemsSource extends DataContext {
     }
 
     //#region EDITOR
-    protected selectedBindItemsType() {
-        super.selectedBindItemsType();
+    protected selectedBinding() {
+        super.selectedBinding();
 
         this.updateEditorBindingSelectedEnums();
     }
 
     private updateEditorBindingSelectedEnums() {
-        // 设置绑定属性
-        let dataList = decoratorData.getPropertyList(this.parent.path);
+        // 获取绑定属性
+        const newEnums = [];
+        let dataList = decoratorData.getPropertyList(this.parent.bindingType);
         let data = dataList.find((item) => { return item.name === this._bindingName; });
         if (dataList && data) {
-            const newEnums = [];
             let count = 0;
             dataList.forEach((item) => {
                 // 仅显示对象类型
-                if (item.type == data.type && item.kind != DecoratorDataKind.Array) {
+                if (item.type == data.type && item.kind != DataKind.Array) {
                     newEnums.push({ name: item.name, value: count++ });
                 }
             });
-
-            this._bindingSelectedEnums = newEnums;
-            CCClass.Attr.setClassAttr(this, 'bindingSelected', 'enumList', newEnums);
         }
-        else {
-            this._bindingSelectedEnums = [];
-            CCClass.Attr.setClassAttr(this, 'bindingSelected', 'enumList', []);
+        // 设置绑定数据枚举
+        this._bindingSelectedEnums = newEnums;
+        CCClass.Attr.setClassAttr(this, 'bindingSelected', 'enumList', newEnums);
+
+        // 如果绑定数据枚举为空，则警告
+        if (this._bindingSelectedEnums.length === 0) {
+            console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件 ItemsSource 绑定未找到合适的数据（列表数据）`);
         }
 
         // 设置绑定数据枚举默认值
         if (this._bindingSelectedName !== '') {
             let findIndex = this._bindingSelectedEnums.findIndex((item) => { return item.name === this._bindingSelectedName; });
             if (findIndex === -1) {
-                console.warn(`PATH ${Locator.getNodeFullPath(this.node)} `, `组件Binding绑定 ${this._bindingSelectedName} 已经不存在`);
+                console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件 ItemsSource 绑定 ${this._bindingSelectedName} 已经不存在`);
                 // 如果只有一个枚举，就设置为默认值
                 if (this._bindingSelectedEnums.length == 1) {
                     this.bindingSelected = 0;
@@ -124,24 +123,43 @@ export class ItemsSource extends DataContext {
      * }
      */
     protected onLoad() {
-        this._bindDataKind = DecoratorDataKind.Array;
+        this._bindDataKind = DataKind.Array;
 
         super.onLoad();
 
         if (EDITOR) return;
 
         this.initTemplate();
+
+        // 初始化默认值
+        if (this._data instanceof Array) {
+            this._data.forEach((item, index) => {
+                this.addItem(index, item);
+            });
+        }
     }
 
     protected onUpdateData() {
-        this.upperDataContext = this.parent.dataContext;
-        this._data = this.upperDataContext[this._bindingName];
+        // 数组类型数据，重新设置绑定属性（重新定位数组元素）
+        // onLoad 中不能直接使用子类型 ItemSource，因为子类型 ItemSource 还未初始化
+        if (this.parent.bindDataKind === DataKind.Array) {
+            let index = this.parent.getItemIndex(this.node);
+            this.upperDataContext = this.parent.dataContext[index];
+        }
+        else {
+            this.upperDataContext = this.parent.dataContext;
+        }
 
+        if (!this.upperDataContext) return;
+
+        this._data = this.upperDataContext[this._bindingName];
         // 设置观察函数
-        observe(((operation: Operation) => {
+        observe((operation) => {
             this._data = this.upperDataContext[this._bindingName];
+
+            if (!this._data) return;
             // 设置数组观察函数
-            observe(((operation: Operation) => {
+            observe((operation) => {
                 // 更新数组
                 let length = this._data.length;
                 if (!operation) return;
@@ -154,14 +172,14 @@ export class ItemsSource extends DataContext {
                 else if (type == 'delete') {
                     this.deleteItem(operation.oldValue);
                 }
-            }).bind(this));
+            }, this);
 
             if (!operation) return;
 
             this._updateCallbackList.forEach((callback) => {
                 callback();
             });
-        }).bind(this));
+        }, this);
 
         this.cleanItems();
     }
@@ -171,13 +189,13 @@ export class ItemsSource extends DataContext {
     private _pool: NodePool = null;
     private initTemplate() {
         if (!this.template) {
-            console.warn(`path:${Locator.getNodeFullPath(this.node)} `, `组件 ItemsSource `, '没有设置模板节点');
+            console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件 ItemsSource 没有设置模板节点`);
             return;
         }
         this._template = this.template;
         this._content = this._template.parent;
         if (!this._pool) {
-            this._pool = new NodePool(`${this.path}`);
+            this._pool = new NodePool(`${this.template.uuid}`);
         }
         this._pool.put(this._template);
     }

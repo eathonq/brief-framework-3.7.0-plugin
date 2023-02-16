@@ -29,21 +29,21 @@ export class ScrollViewDynamic extends Component {
     @property({
         type: ScrollView,
         readonly: true,
-        tooltip: '滚动视图'
+        tooltip: '滚动视图',
     })
     private scrollView: ScrollView = null;
 
     @property({
         type: Node,
         readonly: true,
-        tooltip: '滚动视图可视区域'
+        tooltip: '滚动视图可视区域',
     })
     private view: Node = null;
 
     @property({
         type: Node,
         readonly: true,
-        tooltip: '滚动视图内容'
+        tooltip: '滚动视图内容',
     })
     private content: Node = null;
 

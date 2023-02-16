@@ -2,18 +2,19 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-02-12 13:06
+ * update = 2023-02-15 18:45
  */
 
 import { _decorator, Component, Node, Enum, CCClass } from 'cc';
 import { EDITOR } from 'cc/env';
 import { Locator } from '../common/Locator';
-import { observe, Operation } from '../common/ReactiveObserve';
-import { decoratorData, DecoratorDataKind } from './MVVM';
+import { observe } from '../common/ReactiveObserve';
+import { decoratorData, DataKind } from './MVVM';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /**
  * 数据上下文组件基类
+ * 绑定上级数据中的对象数据到组件上
  */
 @ccclass('brief.DataContext')
 @help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/mvvm-mvvm-kuang-jia/datacontext')
@@ -25,27 +26,33 @@ export class DataContext extends Component {
     protected _isRoot = false;
 
     /** 绑定数据种类 */
-    protected _bindDataKind = DecoratorDataKind.Object;
+    protected _bindDataKind = DataKind.Object;
+    get bindDataKind() {
+        return this._bindDataKind;
+    }
 
     /** 数据上下文路径 */
     @property({
         tooltip: '数据上下文',
         readonly: true,
-        displayName: 'DataContext'
     })
     protected parent: DataContext = null;
 
     @property
-    protected _bindingName = "";
+    protected _bindingType = ""; // 挂载 @property 属性值保存到场景等资源文件中，用于 binding 数据恢复
+    /** 绑定的数据类型（类名） */
+    get bindingType() {
+        return this._bindingType;
+    }
+
     @property
-    protected _bindingType = "";
+    protected _bindingName = ""; // 挂载 @property 属性值保存到场景等资源文件中，用于 binding 数据恢复
     protected _bindingEnums: { name: string, value: number, type: string }[] = [];
     private _binding = 0;
     /** 绑定对象或集合 */
     @property({
-        tooltip: '绑定对象或集合',
         type: Enum({}),
-        serializable: true,
+        tooltip: '绑定对象或集合',
         visible() {
             return !this._isRoot;
         }
@@ -58,11 +65,12 @@ export class DataContext extends Component {
         if (this._bindingEnums[value]) {
             this._bindingName = this._bindingEnums[value].name;
             this._bindingType = this._bindingEnums[value].type;
-            this.selectedBindItemsType();
+            this.selectedBinding();
         }
     }
 
-    private _path = '';
+    @property
+    private _path = ''; // 挂载 @property 属性值保存到场景等资源文件中，用于 binding 数据恢复
     /** 数据路径 */
     get path(): string {
         return this._path;
@@ -88,46 +96,51 @@ export class DataContext extends Component {
 
     protected checkEditorComponent() {
         this.initParentDataContext();
+
+        // 上下文数据异常，则不继续执行
+        if (!this.parent) return;
+
         this.updateEditorBindingEnums();
     }
 
     /** 组件绑定数据类型更新 */
     private updateEditorBindingEnums() {
         // 设置绑定属性
-        let dataList = decoratorData.getPropertyList(this.parent.path);
+        const newEnums = [];
+        let dataList = decoratorData.getPropertyList(this.parent.bindingType);
         if (dataList) {
-            const newEnums = [];
             let count = 0;
-            if (this._bindDataKind === DecoratorDataKind.Object) {
+            if (this._bindDataKind === DataKind.Object) {
                 dataList.forEach((item) => {
                     // 仅显示对象类型
-                    if (item.kind === DecoratorDataKind.Object) {
+                    if (item.kind === DataKind.Object) {
                         newEnums.push({ name: `${item.name}`, value: count++, type: item.type });
                     }
                 });
             }
-            else if (this._bindDataKind === DecoratorDataKind.Array) {
+            else if (this._bindDataKind === DataKind.Array) {
                 dataList.forEach((item) => {
                     // 仅显示数组
-                    if (item.kind === DecoratorDataKind.Array) {
+                    if (item.kind === DataKind.Array) {
                         newEnums.push({ name: `${item.name}`, value: count++, type: item.type });
                     }
                 });
             }
-
-            this._bindingEnums = newEnums;
-            CCClass.Attr.setClassAttr(this, 'binding', 'enumList', newEnums);
         }
-        else {
-            this._bindingEnums = [];
-            CCClass.Attr.setClassAttr(this, 'binding', 'enumList', []);
+        // 更新绑定数据枚举
+        this._bindingEnums = newEnums;
+        CCClass.Attr.setClassAttr(this, 'binding', 'enumList', newEnums);
+
+        // 如果绑定数据枚举为空，则警告
+        if (this._bindingEnums.length === 0) {
+            console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件 DataContext 绑定未找到合适的数据（对象数据）`);
         }
 
         // 设置绑定数据枚举默认值
         if (this._bindingName !== '') {
             let findIndex = this._bindingEnums.findIndex((item) => { return item.name === this._bindingName; });
             if (findIndex === -1) {
-                console.warn(`PATH ${Locator.getNodeFullPath(this.node)} `, `组件Binding绑定 ${this._bindingName} 已经不存在`);
+                console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件 DataContext 绑定 ${this._bindingName} 已经不存在`);
                 // 如果只有一个枚举，就设置为默认值
                 if (this._bindingEnums.length == 1) {
                     this.binding = 0;
@@ -142,9 +155,9 @@ export class DataContext extends Component {
         }
     }
 
-    protected selectedBindItemsType() {
+    protected selectedBinding() {
         // 设置 EDITOR 状态下，绑定属性
-        this.path = `${this.parent.path}.${this._bindingName}.${this._bindingType}`;
+        this.path = `${this.parent.path}.${this._bindingName}`;
     }
     //#endregion
 
@@ -166,7 +179,10 @@ export class DataContext extends Component {
         }
 
         this.initParentDataContext();
-        this.path = this._bindingName !== "" ? `${this.parent.path}.${this._bindingName}` : this.parent.path;
+
+        // 上下文数据异常，则不继续执行
+        if (!this.parent) return;
+
         this.onUpdateData();
     }
 
@@ -174,7 +190,7 @@ export class DataContext extends Component {
         if (!this.parent) {
             this.parent = DataContext.lookUp(this.node, false);
             if (!this.parent) {
-                console.warn(`path:${Locator.getNodeFullPath(this.node)} `, `组件 ItemsSource `, '找不到 DataContext');
+                console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件 DataContext 找不到上级 DataContext`);
             }
         }
 
@@ -183,24 +199,43 @@ export class DataContext extends Component {
 
     /** 绑定数据更新，子类重写 */
     protected onUpdateData() {
-        this.upperDataContext = this.parent._data;
-        this._data = this.upperDataContext[this._bindingName];
+        // 数组类型数据，重新设置绑定属性（重新定位数组元素）
+        // onLoad 中不能直接使用子类型 ItemSource，因为子类型 ItemSource 还未初始化
+        if (this.parent.bindDataKind === DataKind.Array) {
+            let index = this.parent.getItemIndex(this.node);
+            this.upperDataContext = this.parent.dataContext[index];
+        }
+        else {
+            this.upperDataContext = this.parent._data;
+        }
 
+        if (!this.upperDataContext) return;
+
+        this._data = this.upperDataContext[this._bindingName];
         // 设置观察函数
-        observe(((operation: Operation) => {
+        observe((operation) => {
             this._data = this.upperDataContext[this._bindingName];
             if (!operation) return;
 
             this._updateCallbackList.forEach((callback) => {
                 callback();
             });
-        }).bind(this));
+        }, this);
     }
 
     protected _updateCallbackList: Function[] = [];
     /** 添加数据更新回调 */
     addUpdateCallback(callback: Function) {
         this._updateCallbackList.push(callback);
+    }
+
+    /** 
+     * 获取节点在 ItemSource 数组中的索引
+     * @param node 节点
+     * @returns 索引
+     */
+    getItemIndex(node: Node) {
+        return -1;
     }
 
     /**

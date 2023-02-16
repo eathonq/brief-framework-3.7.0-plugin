@@ -57,8 +57,8 @@ export class ViewBase extends Component {
     viewName: string = "";
 
     @property({
-        tooltip: "视图类型:\nView: 全屏视图(显示将关闭其他视图);\nDialog: 对话框(显示在View上层)\nTooltip: 提示框(显示在最上层)",
         type: Enum(ViewType),
+        tooltip: "视图类型:\nView: 全屏视图(显示将关闭其他视图);\nDialog: 对话框(显示在View上层)\nTooltip: 提示框(显示在最上层)",
     })
     viewType: ViewType = ViewType.View;
 

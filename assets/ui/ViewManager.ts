@@ -262,25 +262,25 @@ export class ViewManager extends Component {
     //#region 编辑字段
     @property({
         type: Node,
-        tooltip: "视图内容节点"
+        tooltip: "视图内容节点",
     })
     private viewContent: Node = null;
 
     @property({
         tooltip: "默认视图",
-        readonly: false
+        readonly: false,
     })
     private defaultView: string = "";
 
     @property({
         tooltip: "默认对话框",
-        readonly: true
+        readonly: true,
     })
     private defaultDialog: string = "";
 
     @property({
         tooltip: "默认提示框",
-        readonly: true
+        readonly: true,
     })
     private defaultTooltip: string = "";
 
@@ -288,17 +288,17 @@ export class ViewManager extends Component {
         tooltip: "默认视图索引（优先使用默认视图）",
         readonly: false,
         min: -1,
-        step: 1
+        step: 1,
     })
     private defaultIndex: number = 0;
 
     @property({
-        type: [Prefab]
+        type: [Prefab],
     })
     private _viewList: Prefab[] = [];
     @property({
         type: [Prefab],
-        tooltip: "视图预制体列表"
+        tooltip: "视图预制体列表",
     })
     get viewList(): Prefab[] {
         return this._viewList;

@@ -5,17 +5,17 @@
  * update = 2023-02-12 09:04
  */
 
-import { _decorator, Component } from 'cc';
+import { _decorator, Component, Label, RichText, EditBox } from 'cc';
 import { EDITOR } from 'cc/env';
+import { Locator } from '../common/Locator';
 import { i18n } from './LanguageData';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /** 组件检测数组 */
-const COMP_ARRAY_CHECK = [
-    //组件名、默认属性
-    ['cc.Label', 'string'],
-    ['cc.RichText', 'string'],
-    ['cc.EditBox', 'string'],
+const COMP_ARRAY_CHECK: { type: any, property: string }[] = [
+    { type: Label, property: 'string' },
+    { type: RichText, property: 'string' },
+    { type: EditBox, property: 'string' }
 ];
 
 /**
@@ -30,28 +30,28 @@ export class LocalizedLabel extends Component {
 
     @property({
         tooltip: '绑定组件的名字',
+        displayName: 'Component',
         readonly: true,
     })
     private componentName: string = "";
 
     @property({
         tooltip: '组件上关联的属性',
+        displayName: 'Property',
         readonly: true,
     })
     private componentProperty: string = "";
 
-    @property({ visible: false })
-    private watchPath: string = "";
+    @property
+    private _watchPath: string = "";
     @property({
-        displayName: 'Watch Path',
-        visible: true,
         tooltip: '绑定路径：\n#：参数开始标记;\n$：参数分隔符.',
     })
-    private get _watchPath() {
-        return this.watchPath;
+    private get watchPath() {
+        return this._watchPath;
     }
-    private set _watchPath(value) {
-        this.watchPath = value;
+    private set watchPath(value) {
+        this._watchPath = value;
         this.resetValue();
     }
 
@@ -62,14 +62,19 @@ export class LocalizedLabel extends Component {
 
     private checkEditorComponent() {
         if (EDITOR) {
-            let checkArray = COMP_ARRAY_CHECK;
-            for (const item of checkArray) {
-                if (this.node.getComponent(item[0])) {
-                    this.componentName = item[0];
-                    this.componentProperty = item[1];
+            for (const item of COMP_ARRAY_CHECK) {
+                if (this.node.getComponent(item.type)) {
+                    this.componentName = item.type.name;
+                    this.componentProperty = item.property;
                     break;
                 }
             }
+
+            if (this.componentName == "") {
+                console.warn('LocalizedLabel 组件必须挂载在 Label,RichText,EditBox 上');
+                return;
+            }
+    
         }
     }
     //#endregion
@@ -87,23 +92,28 @@ export class LocalizedLabel extends Component {
          * @param path 地址 
          */
     resetPath(path: string) {
-        this.watchPath = path;
+        this._watchPath = path;
         this.resetValue();
     }
 
     /** 通过watchPath初始化值 */
     resetValue() {
-        this.setComponentValue(i18n.t(this.watchPath));
-    }
-
-    /** 获取组件值 */
-    private getComponentValue(): string {
-        return this.node.getComponent(this.componentName)[this.componentProperty];
+        this.setComponentValue(i18n.t(this._watchPath));
     }
 
     /** 设置组件值 */
     private setComponentValue(value: string) {
-        this.node.getComponent(this.componentName)[this.componentProperty] = value;
+        switch (this.componentName) {
+            case Label.name:
+                this.node.getComponent(Label)[this.componentProperty] = `${value}`;
+                break;
+            case RichText.name:
+                this.node.getComponent(RichText)[this.componentProperty] = `${value}`;
+                break;
+            case EditBox.name:
+                this.node.getComponent(EditBox)[this.componentProperty] = `${value}`;
+                break;
+        }
     }
 
 }

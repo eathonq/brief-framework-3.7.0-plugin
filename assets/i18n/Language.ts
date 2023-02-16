@@ -17,35 +17,37 @@ const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 export class Language extends Component {
 
     //#region ui
-    @property({ visible: false })
-    private language: string = "";
-    @property({ displayName: 'Language', visible: true })
-    private get _language() {
-        return this.language;
+    @property
+    private _language: string = "";
+    @property
+    private get language() {
+        return this._language;
     }
-    private set _language(value) {
-        this.language = value;
+    private set language(value) {
+        this._language = value;
         this.updateLanguage();
     }
 
-    @property({ visible: false })
-    private model: I18nMode = I18nMode.DATA;
-    @property({ displayName: 'Model', visible: true, type: Enum(I18nMode) })
-    private get _model() {
-        return this.model;
+    @property
+    private _model: I18nMode = I18nMode.DATA;
+    @property({ 
+        type: Enum(I18nMode),
+    })
+    private get model() {
+        return this._model;
     }
-    private set _model(value) {
-        this.model = value;
+    private set model(value) {
+        this._model = value;
         this.updateModel();
     }
 
     //#endregion
     
     private updateLanguage() {
-        i18n.setLanguage(this.language);
+        i18n.setLanguage(this._language);
     }
 
     private updateModel() {
-        i18n.setMode(this.model);
+        i18n.setMode(this._model);
     }
 }

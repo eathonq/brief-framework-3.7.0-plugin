@@ -2,112 +2,148 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-02-12 13:06
+ * update = 2023-02-15 18:45
  */
 
 //#region Decorator
 
-/**
- * 装饰器类数据信息
- */
+/** 装饰器类数据信息 */
 type class_info = {
     /** 属性列表 */
     property: string[],
     /** 属性类型 */
-    property_type: {},
+    data_type: { [key: string]: string },
     /** 属性种类 */
-    property_kind:{},
-    /** 函数列表 */ 
+    data_kind: { [key: string]: DataKind },
+    /** 函数列表 */
     function: string[],
+    /** 临时数据 */
+    temp: any,
+    /** 是否在编辑器阶段设置为默认值 */
+    isSetDefaultInEditor: boolean,
 }
 
-/**
- * 装饰器数据种类枚举
- */
-export enum DecoratorDataKind {
-    /**
-     * 简单类型
-     * @example
-     * String Number Boolean
-     */
-    Simple = 0,
-    /** Object类型 */
-    Object = 1,
-    /** Array类型 */
-    Array = 2,
-    /** Function类型 */
-    Function = 3,
+/** 装饰器数据种类枚举 */
+export enum DataKind {
     /** 未知类型 */
-    Unknown = 4,
+    Unknown = 0,
+    /** String类型 */
+    String = 1,
+    /** Number类型 */
+    Number = 2,
+    /** Boolean类型 */
+    Boolean = 3,
+    /** Object类型 */
+    Object = 4,
+    /** Array类型 */
+    Array = 5,
+    /** Function类型 */
+    Function = 6,
 };
+
+function toDataKind(constructor: any) {
+    if (constructor === String) {
+        return DataKind.String;
+    }
+    else if (constructor === Number) {
+        return DataKind.Number;
+    }
+    else if (constructor === Boolean) {
+        return DataKind.Boolean;
+    }
+    else if (is_array_type(constructor)) {
+        return DataKind.Array;
+    }
+    else {
+        return DataKind.Object;
+    }
+}
 
 /** 装饰器数据 */
 class DecoratorData {
-    private _infoMap = new Map<string, class_info>();
+
+    /**
+     * 装饰器类数据信息
+     * @param key: 类名
+     * @param value: 类数据信息
+     */
+    private _classInfoMap = new Map<string, class_info>();
 
     /**
      *
      */
     constructor() {
         // 设置默认的数据类型
-        this.markProperty('String', 'String', String.name, DecoratorDataKind.Simple);
-        this.markProperty('Number', 'Number', Number.name, DecoratorDataKind.Simple);
-        this.markProperty('Boolean', 'Boolean', Boolean.name, DecoratorDataKind.Simple);
+        this.markProperty('String', 'String', String.name, DataKind.String);
+        this.markProperty('Number', 'Number', Number.name, DataKind.Number);
+        this.markProperty('Boolean', 'Boolean', Boolean.name, DataKind.Boolean);
+    }
+
+    private getInfo(className: string) {
+        let info = this._classInfoMap.get(className);
+        if (!info) {
+            info = { property: [], data_type: {}, data_kind: {}, function: [], temp: null, isSetDefaultInEditor: false };
+            this._classInfoMap.set(className, info);
+        }
+        return info;
+    }
+
+    /**
+     * 标记类
+     * @param className 目标类名 
+     * @param temp 临时数据
+     */
+    markClass(className: string, temp: any) {
+        let info = this.getInfo(className);
+        info.temp = temp;
+        info.isSetDefaultInEditor = true;
+
+        // 没有指定类型的属性，使用默认值的类型
+        for (let key in info.data_kind) {
+            if (info.data_kind[key] == DataKind.Unknown) {
+                if (temp[key] == null || temp[key] == undefined) {
+                    console.warn(`${className} ${key} 请设置默认值，或在 @oop() 中指定类型。`);
+                    continue;
+                }
+                info.data_type[key] = temp[key].constructor.name;
+                info.data_kind[key] = toDataKind(temp[key].constructor);
+            }
+        }
     }
 
     /**
      * 标记属性变更通知
-     * @param tag 目标类名
-     * @param key 目标属性名
+     * @param className 目标类名
+     * @param prop 目标属性名
      * @param type 目标属性类型
      */
-    markProperty(tag: string, key: string, type: string, kind: DecoratorDataKind) {
-        let info = this._infoMap.get(tag);
-        if (!info) {
-            info = { property: [], property_type: {}, property_kind:{}, function: [] };
-            this._infoMap.set(tag, info);
-        }
-        info.property.push(key);
-        info.property_type[key] = type;
-        info.property_kind[key] = kind;
-    }
-
-    /**
-     * 检查是否标记了属性变更通知
-     * @param tag 目标类名
-     * @param key 目标属性名
-     * @returns 是否标记了属性变更通知，true标记了，false未标记
-     */
-    checkProperty(tag: string, key: string) {
-        let info = this._infoMap.get(tag);
-        if (info) {
-            return info.property.indexOf(key) >= 0;
-        }
-        return false;
+    markProperty(className: string, prop: string, type: string, kind: DataKind) {
+        let info = this.getInfo(className);
+        info.property.push(prop);
+        info.data_type[prop] = type;
+        info.data_kind[prop] = kind;
     }
 
     /**
      * 获取标记了属性变更通知的属性列表
-     * @param tagPath 目标路径
+     * @param className 目标类名
      * @returns 标记了属性变更通知的属性列表
      */
-    getPropertyList(tagPath: string) {
+    getPropertyList(className: string) {
         let oo_type_list: {
             /** 属性名称 */
             name: string;
             /** 属性类型 */
-            type: any;
+            type: string;
             /** 属性种类 */
-            kind: DecoratorDataKind;
+            kind: DataKind;
         }[] = [];
-        let tagList = tagPath.split('.');
-        let tagClass = tagList[tagList.length - 1];
-        let info = this._infoMap.get(tagClass);
+        let info = this._classInfoMap.get(className);
         if (info) {
             for (let i = 0; i < info.property.length; i++) {
                 let name = info.property[i];
-                let type = info.property_type[name];
-                let kind = info.property_kind[name];
+                let type = info.data_type[name];
+                let kind = info.data_kind[name];
                 oo_type_list.push({ name, type, kind });
             }
         }
@@ -117,43 +153,88 @@ class DecoratorData {
 
     /**
      * 标记方法通知
-     * @param tag 目标类名
-     * @param key 目标方法名
+     * @param className 目标类名
+     * @param func 目标方法名
      */
-    markFunction(tag: string, key: string) {
-        let info = this._infoMap.get(tag);
-        if (!info) {
-            info = { property: [], property_type: {}, property_kind:{}, function: [] };
-            this._infoMap.set(tag, info);
-        }
-        info.function.push(key);
-        info.property_type[key] = Function.name;
-        info.property_kind[key] = DecoratorDataKind.Function;
+    markFunction(className: string, func: string) {
+        let info = this.getInfo(className);
+        info.function.push(func);
     }
 
     /**
      * 获取标记的方法名列表
-     * @param tagPath 目标路径
+     * @param className 目标类名
      * @returns 目标类中标记的方法名列表
      */
-    getFunctionList(tagPath: string) {
+    getFunctionList(className: string) {
         let oo_type_list: {
             name: string;
-            type: any;
-            kind: DecoratorDataKind;
+            type: string;
+            kind: DataKind;
         }[] = [];
-        let tagList = tagPath.split('.');
-        let tagClass = tagList[tagList.length - 1];
-        let info = this._infoMap.get(tagClass);
+        let info = this._classInfoMap.get(className);
+        let type = Function.name;
+        let kind = DataKind.Function;
         if (info) {
             for (let i = 0; i < info.function.length; i++) {
                 let name = info.function[i];
-                let type = Function;
-                let kind = DecoratorDataKind.Function;
                 oo_type_list.push({ name, type, kind });
             }
         }
         return oo_type_list;
+    }
+
+    /**
+     * 设置编辑状态下的默认值
+     * @param temp 临时数据
+     */
+    setDefaultInEditor(temp: any) {
+        let className = temp.constructor.name;
+        let info = this._classInfoMap.get(className);
+        if (info) {
+            info.isSetDefaultInEditor = true;
+            info.temp = temp;
+        }
+    }
+
+    /**
+     * 获取默认值
+     * @param path 目标路径 
+     * @returns 
+     */
+    getDefaultInEditor(path: string) {
+        let pathList = path.split('.');
+        if (pathList.length < 2) {
+            return null;
+        }
+        let typeClass = pathList[0];
+        let info = this._classInfoMap.get(typeClass);
+        if (!info || !info.isSetDefaultInEditor) {
+            return null;
+        }
+
+        // let temp = info.temp;
+        // for (let i = 1; i < pathList.length; i++) {
+        //     let key = pathList[i];
+        //     temp = temp[key];
+        // }
+        // return temp;
+
+        try {
+            let temp = info.temp;
+            for (let i = 1; i < pathList.length; i++) {
+                let key = pathList[i];
+                temp = temp[key];
+                // 判断是否是数组
+                if (temp instanceof Array) {
+                    temp = temp[0];
+                }
+            }
+            return temp;
+        } catch (error) {
+            console.warn(`${path}, ${error}`);
+            return null;
+        }
     }
 }
 
@@ -200,28 +281,18 @@ export function oop(...args: any[]) {
                 console.error("oop: 请在类中使用。");
                 return;
             }
-            
-            let kind:DecoratorDataKind;
-            if(arg_0){
-                if(is_simple_type(arg_0)){
-                    // @ts-ignore
-                    arg_0 = arg_0.name;
-                    kind = DecoratorDataKind.Simple;
-                }
-                else if(is_array_type(arg_0)){
-                    arg_0 = arg_0[0].name;
-                    kind = DecoratorDataKind.Array;
-                }
-                else{
-                    arg_0 = arg_0.name;
-                    kind = DecoratorDataKind.Object;
-                }
+
+            let kind: DataKind;
+            let type = "";
+            if (arg_0) {
+                kind = toDataKind(arg_0);
+                type = kind == DataKind.Array ? arg_0[0].name : arg_0.name;
             }
-            else{
-                arg_0 = target.constructor.name; // 自己的类型
-                kind = DecoratorDataKind.Object;
+            else {
+                type = target.constructor.name; // 自己的类型
+                kind = DataKind.Object;
             }
-            decoratorData.markProperty(tag, key, arg_0, kind);
+            decoratorData.markProperty(tag, key, type, kind);
         }
     }
     else {
@@ -233,8 +304,7 @@ export function oop(...args: any[]) {
             console.error("oop: 请在类中使用。");
             return;
         }
-        let type = String.name; // 默认使用字符串类型
-        decoratorData.markProperty(tag, key, type, DecoratorDataKind.Simple);
+        decoratorData.markProperty(tag, key, "unknown", DataKind.Unknown);
     }
 }
 
@@ -254,4 +324,14 @@ export function oof(target: any, key: string, descriptor: PropertyDescriptor) {
     decoratorData.markFunction(tag, key);
 }
 
+
+/**
+ * 类装饰器
+ * @example
+ * _@ooc
+ * export class MyClass {}
+ */
+export function ooc(constructor: any): void {
+    decoratorData.markClass(constructor.name, new constructor());
+}
 //#endregion

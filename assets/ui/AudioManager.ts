@@ -59,12 +59,12 @@ export class AudioManager extends Component {
 
     @property({
         type: AudioClip,
-        tooltip: "默认背景音乐文件"
+        tooltip: "默认背景音乐文件",
     })
     private musicClip: AudioClip = null;
 
     @property({
-        tooltip: "启动播放背景音乐"
+        tooltip: "启动播放背景音乐",
     })
     private playOnLoad: boolean = true;
 

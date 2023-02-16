@@ -129,8 +129,8 @@ class Configuration implements IStorage {
     static get instance(): Configuration {
         if (!this._instance) {
             this._instance = new Configuration();
+            this._instance.init();
         }
-        this._instance.init();
         return this._instance;
     }
     //#endregion
