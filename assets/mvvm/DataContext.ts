@@ -22,42 +22,66 @@ const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 @menu('Brief/MVVM/DataContext')
 export class DataContext extends Component {
 
+    private _isRoot = false;
     /** 是否数据上下文根数据  */
-    protected _isRoot = false;
+    get isRoot() {
+        return this._isRoot;
+    }
+    protected set isRoot(value) {
+        this._isRoot = value;
+    }
 
+    private _bindDataKind = DataKind.Object;
     /** 绑定数据种类 */
-    protected _bindDataKind = DataKind.Object;
     get bindDataKind() {
         return this._bindDataKind;
     }
+    protected set bindDataKind(value) {
+        this._bindDataKind = value;
+    }
 
+    @property
+    private _parent: DataContext = null;
     /** 数据上下文路径 */
     @property({
         tooltip: '数据上下文',
+        displayName: 'DataContext',
         readonly: true,
     })
-    protected parent: DataContext = null;
+    get parent(){
+        return this._parent;
+    }
+    protected set parent(value){
+        this._parent = value;
+    }
 
     @property
-    protected _bindingType = ""; // 挂载 @property 属性值保存到场景等资源文件中，用于 binding 数据恢复
+    private _bindingType = ""; // 挂载 @property 属性值保存到场景等资源文件中，用于数据恢复
     /** 绑定的数据类型（类名） */
     get bindingType() {
         return this._bindingType;
     }
+    protected set bindingType(value) {
+        this._bindingType = value;
+    }
 
     @property
-    protected _bindingName = ""; // 挂载 @property 属性值保存到场景等资源文件中，用于 binding 数据恢复
+    protected _bindingName = ""; // 挂载 @property 属性值保存到场景等资源文件中，用于数据恢复
+    get bindingName() {
+        return this._bindingName;
+    }
+
     protected _bindingEnums: { name: string, value: number, type: string }[] = [];
     private _binding = 0;
     /** 绑定对象或集合 */
     @property({
         type: Enum({}),
-        tooltip: '绑定对象或集合',
+        tooltip: '绑定属性',
         visible() {
             return !this._isRoot;
-        }
+        },
     })
-    protected get binding() {
+    get binding() {
         return this._binding;
     }
     protected set binding(value) {
@@ -69,24 +93,24 @@ export class DataContext extends Component {
         }
     }
 
-    @property
-    private _path = ''; // 挂载 @property 属性值保存到场景等资源文件中，用于 binding 数据恢复
-    /** 数据路径 */
+    private _path = ''; // 挂载 @property 属性值保存到场景等资源文件中，用于数据恢复
+    /** 数据路径（EDITOR编辑过程默认数据使用） */
     get path(): string {
         return this._path;
     }
     protected set path(val: string) {
         this._path = val;
     }
+
+    /** 上一级绑定数据 */
+    protected _upperData: any = null;
+
     /** 当前绑定数据 */
     protected _data: any = null;
     /** 当前绑定数据 */
     get dataContext() {
         return this._data;
     }
-
-    /** 上一级绑定数据 */
-    protected upperDataContext: any = null;
 
     //#region EDITOR
     onRestore() {
@@ -98,7 +122,7 @@ export class DataContext extends Component {
         this.initParentDataContext();
 
         // 上下文数据异常，则不继续执行
-        if (!this.parent) return;
+        if (!this._parent) return;
 
         this.updateEditorBindingEnums();
     }
@@ -107,7 +131,7 @@ export class DataContext extends Component {
     private updateEditorBindingEnums() {
         // 设置绑定属性
         const newEnums = [];
-        let dataList = decoratorData.getPropertyList(this.parent.bindingType);
+        let dataList = decoratorData.getPropertyList(this._parent.bindingType);
         if (dataList) {
             let count = 0;
             if (this._bindDataKind === DataKind.Object) {
@@ -157,7 +181,7 @@ export class DataContext extends Component {
 
     protected selectedBinding() {
         // 设置 EDITOR 状态下，绑定属性
-        this.path = `${this.parent.path}.${this._bindingName}`;
+        this.path = `${this._parent.path}.${this._bindingName}`;
     }
     //#endregion
 
@@ -180,62 +204,80 @@ export class DataContext extends Component {
 
         this.initParentDataContext();
 
-        // 上下文数据异常，则不继续执行
-        if (!this.parent) return;
-
         this.onUpdateData();
     }
 
+    protected onDestroy() {
+        if (EDITOR) return;
+
+        this._parent?.unregister(this);
+    }
+
     private initParentDataContext() {
-        if (!this.parent) {
-            this.parent = DataContext.lookUp(this.node, false);
-            if (!this.parent) {
+        if (!this._parent) {
+            this._parent = DataContext.lookUp(this.node, false);
+            if (!this._parent) {
                 console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件 DataContext 找不到上级 DataContext`);
+                return;
             }
         }
 
-        this.parent.addUpdateCallback(this.onUpdateData.bind(this));
+        this._parent.register(this, this.onUpdateData);
     }
 
     /** 绑定数据更新，子类重写 */
     protected onUpdateData() {
-        // 数组类型数据，重新设置绑定属性（重新定位数组元素）
-        // onLoad 中不能直接使用子类型 ItemSource，因为子类型 ItemSource 还未初始化
-        if (this.parent.bindDataKind === DataKind.Array) {
-            let index = this.parent.getItemIndex(this.node);
-            this.upperDataContext = this.parent.dataContext[index];
-        }
-        else {
-            this.upperDataContext = this.parent._data;
-        }
+        // 上下文数据异常，则不继续执行
+        if (!this._parent) return;
 
-        if (!this.upperDataContext) return;
+        this._upperData = this._parent.getDataContextInRegister(this);
+        if (!this._upperData) return;
 
-        this._data = this.upperDataContext[this._bindingName];
+        this._data = this._upperData[this._bindingName];
         // 设置观察函数
         observe((operation) => {
-            this._data = this.upperDataContext[this._bindingName];
+            this._data = this._upperData[this._bindingName];
+            this.onUpdateDataInternal();
             if (!operation) return;
 
-            this._updateCallbackList.forEach((callback) => {
-                callback();
+            this._registry.forEach((callback, target) => {
+                callback.call(target);
             });
+
         }, this);
     }
 
-    protected _updateCallbackList: Function[] = [];
-    /** 添加数据更新回调 */
-    addUpdateCallback(callback: Function) {
-        this._updateCallbackList.push(callback);
+    /** 绑定数据内部更新，子类重写 */
+    protected onUpdateDataInternal() { }
+
+    protected _registry: Map<any, Function> = new Map();
+    /**
+     * 注册
+     * @param target 注册对象 
+     * @param onUpdateData 数据更新回调
+     */
+    register(target:any, onUpdateData:Function){
+        this._registry.set(target, onUpdateData);
     }
 
-    /** 
-     * 获取节点在 ItemSource 数组中的索引
-     * @param node 节点
-     * @returns 索引
+    /**
+     * 取消注册
+     * @param target 注册对象 
      */
-    getItemIndex(node: Node) {
-        return -1;
+    unregister(target:any){
+        this._registry.delete(target);
+    }
+
+    /**
+     * 获取数据上下文（需要先注册）
+     * @param target 注册对象
+     * @returns 数据上下文
+     */
+    getDataContextInRegister(target: any){
+        if (this._registry.has(target)) {
+            return this._data;
+        }
+        return null;
     }
 
     /**

@@ -41,6 +41,11 @@ export enum DataKind {
     Function = 6,
 };
 
+/**
+ * 构造函数转换为数据种类
+ * @param constructor 构造函数
+ * @returns 数据种类
+ */
 function toDataKind(constructor: any) {
     if (constructor === String) {
         return DataKind.String;
@@ -245,31 +250,23 @@ export const decoratorData = new DecoratorData();
 
 //#region oop
 
-/**
- * mvvm 属性装饰器基础类型
- */
-type _mvvm_data_decorators_simple_property_type = String | Number | Boolean;
-function is_simple_type(type: any): type is _mvvm_data_decorators_simple_property_type {
-    return type === String || type === Number || type === Boolean;
-}
-
 function is_array_type(type: any): type is Array<any> {
     return type instanceof Array;
 }
 
 /**
  * mvvm 属性装饰器
- * @param type 属性对象类型（非基础类型使用）
+ * @param type 属性对象类型
  * @example
- * _@oop // 标记属性（基础类型可以使用 String | Number | Boolean）
- * _@oop(TypeClass) // 标记属性（非基础类型使用）
+ * _@oop // 标记属性（有默认值属性使用）
+ * _@oop(TypeClass) // 标记属性（没有默认值属性使用）
  */
 export function oop(type: any): any;
 /**
  * mvvm 属性装饰器
  * @example
- * _@oop // 标记属性（基础类型可以使用 String | Number | Boolean）
- * _@oop(TypeClass) // 标记属性（非基础类型使用）
+ * _@oop // 标记属性（有默认值属性使用）
+ * _@oop(TypeClass) // 标记属性（没有默认值属性使用）
  */
 export function oop(target: any, key?: string): void;
 export function oop(...args: any[]) {
@@ -286,11 +283,16 @@ export function oop(...args: any[]) {
             let type = "";
             if (arg_0) {
                 kind = toDataKind(arg_0);
-                type = kind == DataKind.Array ? arg_0[0].name : arg_0.name;
+                if(kind == DataKind.Array){
+                    type = arg_0[0] ? arg_0[0].name : target.constructor.name;  // 自己的类型
+                }
+                else{
+                    type = arg_0.name;
+                }
             }
             else {
-                type = target.constructor.name; // 自己的类型
                 kind = DataKind.Object;
+                type = target.constructor.name; // 自己的类型
             }
             decoratorData.markProperty(tag, key, type, kind);
         }

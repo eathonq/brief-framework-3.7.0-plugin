@@ -47,9 +47,10 @@ export class Visibility extends Component {
     private _parent: DataContext = null;
     @property({
         type: DataContext,
+        displayName: 'DataContext',
         tooltip: '数据上下文',
     })
-    private get parent() {
+    get parent() {
         return this._parent;
     }
     private set parent(value) {
@@ -58,7 +59,7 @@ export class Visibility extends Component {
     }
 
     @property
-    private _bindingMode = 1;
+    private _bindingMode = 1; // 挂载 @property 属性值保存到场景等资源文件中，用于数据恢复
     private _modeEnums: { name: string, value: number, mode: BindingMode }[] = [];
     private _mode = 0;
     /** 绑定模式 */
@@ -66,7 +67,7 @@ export class Visibility extends Component {
         type: Enum({}),
         tooltip: '绑定模式:\n TwoWay: 双向绑定(Model<->View);\n OneWay: 单向绑定(Model->View);\n OneTime: 一次单向绑定(Model->View);\n OneWayToSource: 单向绑定(Model<-View)。',
     })
-    private get mode() {
+    get mode() {
         return this._mode;
     }
     private set mode(value) {
@@ -77,23 +78,38 @@ export class Visibility extends Component {
     }
 
     @property
-    private _bindingName = "";  // 挂载 @property 属性值保存到场景等资源文件中，用于 binding 数据恢复
-    private _bindingEnums: { name: string, value: number }[] = [];
+    private _bindingType = "";  // 挂载 @property 属性值保存到场景等资源文件中，用于数据恢复
+    /** 绑定的数据类型（类名） */
+    get bindingType() {
+        return this._bindingType;
+    }
+
+    @property
+    private _bindingName = "";  // 挂载 @property 属性值保存到场景等资源文件中，用于数据恢复
+    get bindingName() {
+        return this._bindingName;
+    }
+
+    private _bindingEnums: { name: string, value: number, type: string }[] = [];
     private _binding = 0;
     /** 绑定属性 */
     @property({
         type: Enum({}),
         tooltip: '绑定属性',
     })
-    private get binding() {
+    get binding() {
         return this._binding;
     }
     private set binding(value) {
         this._binding = value;
         if (this._bindingEnums[value]) {
             this._bindingName = this._bindingEnums[value].name;
+            this._bindingType = this._bindingEnums[value].type;
         }
     }
+
+    /** 上一级绑定数据 */
+    private _upperData: any = null;
 
     /** 当前绑定数据 */
     protected _data: any = null;
@@ -101,9 +117,6 @@ export class Visibility extends Component {
     get dataContext() {
         return this._data;
     }
-
-    /** 上一级绑定数据 */
-    private upperDataContext: any = null;
 
     //#region EDITOR
     onRestore() {
@@ -161,7 +174,7 @@ export class Visibility extends Component {
             let count = 0;
             dataList.forEach((item) => {
                 if (item.kind === DataKind.Boolean) {
-                    newEnums.push({ name: item.name, value: count++ });
+                    newEnums.push({ name: item.name, value: count++, type: item.type });
                 }
             });
         }
@@ -203,9 +216,6 @@ export class Visibility extends Component {
 
         this.initParentDataContext();
 
-        // 上下文数据异常，则不继续执行
-        if (!this._parent) return;
-
         // 设置绑定模式
         switch (this._bindingMode) {
             case BindingMode.TwoWay:
@@ -223,6 +233,12 @@ export class Visibility extends Component {
                 this.onComponentCallback();
                 break;
         }
+    }
+
+    protected onDestroy() {
+        if (EDITOR) return;
+
+        this._parent?.unregister(this);
     }
 
     protected onEnable() {
@@ -244,32 +260,28 @@ export class Visibility extends Component {
             this._parent = DataContext.lookUp(this.node, true);
             if (!this._parent) {
                 console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件 Visibility 找不到上级 DataContext`);
+                return;
             }
         }
 
-        this._parent.addUpdateCallback(this.onUpdateData.bind(this));
+        this._parent.register(this, this.onUpdateData);
     }
 
     private _isObservable = false;
     /** 观察函数 */
     private _reaction = null;
     private onUpdateData() {
-        if (!this._parent.dataContext) return;
+        // 上下文数据异常，则不继续执行
+        if (!this._parent) return;
 
-        // 数组类型数据，重新设置绑定属性（重新定位数组元素）
-        if (this._parent.bindDataKind === DataKind.Array) {
-            let index = this._parent.getItemIndex(this.node);
-            this.upperDataContext = this._parent.dataContext[index];
-        }
-        else {
-            this.upperDataContext = this._parent.dataContext;
-        }
+        this._upperData = this._parent.getDataContextInRegister(this);
+        if (!this._upperData) return;
 
-        this._data = this.upperDataContext[this._bindingName];
+        this._data = this._upperData[this._bindingName];
         if (this._isObservable) {
             // 设置观察函数
             this._reaction = observe((operation) => {
-                let data = this.upperDataContext[this._bindingName];
+                let data = this._upperData[this._bindingName];
                 if (!operation) return;
 
                 this.setComponentValue(data);
@@ -294,7 +306,10 @@ export class Visibility extends Component {
 
     private onComponentCallback() {
         this.node.on(Node.EventType.ACTIVE_IN_HIERARCHY_CHANGED, () => {
-            this.upperDataContext[this._bindingName] = this.node.active;
+            //this._upperData[this._bindingName] = this.node.active;
+            if(this._upperData && this._upperData.hasOwnProperty(this._bindingName)) {
+                this._upperData[this._bindingName] = this.node.active;
+            }
         }, this);
     }
 }

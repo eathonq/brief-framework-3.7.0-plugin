@@ -34,15 +34,16 @@ export class ItemsSource extends DataContext {
     @property({
         tooltip: '是否绑定选中项',
     })
-    private get isSelected() {
+    get isSelected() {
         return this._isSelected;
     }
     private set isSelected(value) {
         this._isSelected = value;
+        this.updateEditorBindingSelectedEnums();
     }
 
     @property
-    private _bindingSelectedName = ""; // 挂载 @property 属性值保存到场景等资源文件中，用于 binding 数据恢复
+    private _bindingSelectedName = ""; // 挂载 @property 属性值保存到场景等资源文件中，用于数据恢复
     private _bindingSelectedEnums: { name: string, value: number }[] = [];
     private _bindingSelected = 0;
     /** 绑定选中项 */
@@ -53,7 +54,7 @@ export class ItemsSource extends DataContext {
             return this._isSelected;
         }
     })
-    private get bindingSelected() {
+    get bindingSelected() {
         return this._bindingSelected;
     }
     private set bindingSelected(value) {
@@ -64,6 +65,7 @@ export class ItemsSource extends DataContext {
     }
 
     //#region EDITOR
+
     protected selectedBinding() {
         super.selectedBinding();
 
@@ -71,6 +73,8 @@ export class ItemsSource extends DataContext {
     }
 
     private updateEditorBindingSelectedEnums() {
+        if (!this._isSelected) return;
+
         // 获取绑定属性
         const newEnums = [];
         let dataList = decoratorData.getPropertyList(this.parent.bindingType);
@@ -113,75 +117,44 @@ export class ItemsSource extends DataContext {
     }
     //#endregion
 
-    /**
-     * 子类重写此方法需要调用 super.onLoad()
-     * @example
-     * protected onLoad() {
-     *    super.onLoad();
-     *    if (EDITOR) return;
-     *    // TODO
-     * }
-     */
     protected onLoad() {
-        this._bindDataKind = DataKind.Array;
-
+        this.bindDataKind = DataKind.Array;
         super.onLoad();
 
         if (EDITOR) return;
 
         this.initTemplate();
 
-        // 初始化默认值
-        if (this._data instanceof Array) {
-            this._data.forEach((item, index) => {
+        // 添加初始列表项
+        if (this.dataContext instanceof Array) {
+            this.dataContext.forEach((item, index) => {
                 this.addItem(index, item);
             });
         }
     }
 
     protected onUpdateData() {
-        // 数组类型数据，重新设置绑定属性（重新定位数组元素）
-        // onLoad 中不能直接使用子类型 ItemSource，因为子类型 ItemSource 还未初始化
-        if (this.parent.bindDataKind === DataKind.Array) {
-            let index = this.parent.getItemIndex(this.node);
-            this.upperDataContext = this.parent.dataContext[index];
-        }
-        else {
-            this.upperDataContext = this.parent.dataContext;
-        }
+        super.onUpdateData();
+        this.cleanItems();
+    }
 
-        if (!this.upperDataContext) return;
-
-        this._data = this.upperDataContext[this._bindingName];
-        // 设置观察函数
+    protected onUpdateDataInternal() {
+        if (!this._data) return;
+        // 设置数组观察函数
         observe((operation) => {
-            this._data = this.upperDataContext[this._bindingName];
-
-            if (!this._data) return;
-            // 设置数组观察函数
-            observe((operation) => {
-                // 更新数组
-                let length = this._data.length;
-                if (!operation) return;
-
-                let type = operation.type;
-                if (type == 'add') {
-                    let target = operation.target as any[];
-                    this.addItem(target.indexOf(operation.value), operation.value);
-                }
-                else if (type == 'delete') {
-                    this.deleteItem(operation.oldValue);
-                }
-            }, this);
-
+            // 更新数组
+            let length = this._data.length;
             if (!operation) return;
 
-            this._updateCallbackList.forEach((callback) => {
-                callback();
-            });
+            let type = operation.type;
+            if (type == 'add') {
+                let target = operation.target as any[];
+                this.addItem(target.indexOf(operation.value), operation.value);
+            }
+            else if (type == 'delete') {
+                this.deleteItem(operation.oldValue);
+            }
         }, this);
-
-        this.cleanItems();
     }
 
     private _content: Node = null;
@@ -195,7 +168,8 @@ export class ItemsSource extends DataContext {
         this._template = this.template;
         this._content = this._template.parent;
         if (!this._pool) {
-            this._pool = new NodePool(`${this.template.uuid}`);
+            let path = Locator.getNodeFullPath(this._template);
+            this._pool = new NodePool(path);      
         }
         this._pool.put(this._template);
     }
@@ -247,7 +221,7 @@ export class ItemsSource extends DataContext {
         this._nodeDataList.splice(index, 1);
     }
 
-    getItemIndex(node: Node) {
+    private getItemIndex(node: Node) {
         let template = node;
         let index = -1;
         while (template) {
@@ -263,4 +237,23 @@ export class ItemsSource extends DataContext {
         return -1;
     }
 
+    /**
+     * 获取数据上下文
+     * @param target 注册对象
+     * @returns 数据上下文
+     */
+    getDataContextInRegister(target: any) {
+        if (this._registry.has(target)) {
+            let index = this.getItemIndex(target.node);
+
+            // 基础类型数据，重新设置上级数据和绑定名称
+            if (target._bindingName === target._bindingType || Number.isInteger(Number(target._bindingName))) {
+                target._bindingName = `${index}`;
+                return this._data;
+            }
+
+            return this._data[index];
+        }
+        return null;
+    }
 }

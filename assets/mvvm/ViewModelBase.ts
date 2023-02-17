@@ -30,9 +30,9 @@ export class ViewModelBase extends DataContext {
             return;
         }
 
-        this._isRoot = true;
-        this._bindingType = data.constructor.name;
-        this.path = this._bindingType;
+        this.isRoot = true;
+        this.bindingType = data.constructor.name;
+        this.path = this.bindingType;
         this.parent = this;
 
         super.onLoad();

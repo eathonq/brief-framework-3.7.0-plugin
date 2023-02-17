@@ -74,9 +74,10 @@ export class Binding extends Component {
     private _parent: DataContext = null;
     @property({
         type: DataContext,
+        displayName: 'DataContext',
         tooltip: '数据上下文',
     })
-    private get parent() {
+    get parent() {
         return this._parent;
     }
     private set parent(value) {
@@ -85,7 +86,7 @@ export class Binding extends Component {
     }
 
     @property
-    private _bindingMode = -1;
+    private _bindingMode = -1; // 挂载 @property 属性值保存到场景等资源文件中，用于 binding 数据恢复
     private _modeEnums: { name: string, value: number, mode: BindingMode }[] = [];
     private _mode = 0;
     /** 绑定模式 */
@@ -93,7 +94,7 @@ export class Binding extends Component {
         type: Enum({}),
         tooltip: '绑定模式:\n TwoWay: 双向绑定(Model<->View);\n OneWay: 单向绑定(Model->View);\n OneTime: 一次单向绑定(Model->View);\n OneWayToSource: 单向绑定(Model<-View)。',
     })
-    private get mode() {
+    get mode() {
         return this._mode;
     }
     private set mode(value) {
@@ -104,7 +105,17 @@ export class Binding extends Component {
     }
 
     @property
-    private _bindingName = ""; // 挂载 @property 属性值保存到场景等资源文件中，用于 binding 数据恢复
+    private _bindingType = "";  // 挂载 @property 属性值保存到场景等资源文件中，用于数据恢复
+    get bindingType() {
+        return this.bindingType;
+    }
+
+    @property
+    private _bindingName = ""; // 挂载 @property 属性值保存到场景等资源文件中，用于数据恢复
+    get bindingName() {
+        return this._bindingName;
+    }
+
     private _bindingEnums: { name: string, value: number, type: string }[] = [];
     private _binding = 0;
     /** 绑定属性 */
@@ -112,26 +123,29 @@ export class Binding extends Component {
         type: Enum({}),
         tooltip: '绑定属性',
     })
-    private get binding() {
+    get binding() {
         return this._binding;
     }
     private set binding(value) {
         this._binding = value;
         if (this._bindingEnums[value]) {
             this._bindingName = this._bindingEnums[value].name;
+            this._bindingType = this._bindingEnums[value].type;
             this.selectedBinding();
         }
     }
 
-    private _customEventData_visible = false;
     /** 绑定方法自定义参数 */
     @property({
         tooltip: '绑定方法自定义参数',
         visible() {
-            return this._customEventData_visible;
-        }
+            return this.componentName == Button.name;
+        },
     })
     private customEventData: string = "";
+
+    /** 上一级绑定数据 */
+    private _upperData: any = null;
 
     /** 当前绑定数据 */
     protected _data: any = null;
@@ -139,9 +153,6 @@ export class Binding extends Component {
     get dataContext() {
         return this._data;
     }
-
-    /** 上一级绑定数据 */
-    private upperDataContext: any = null;
 
     //#region EDITOR
     onRestore() {
@@ -181,9 +192,6 @@ export class Binding extends Component {
     /** 默认组件设置 */
     private defaultEditorComponent() {
         switch (this.componentName) {
-            case Button.name:
-                this._customEventData_visible = true;
-                break;
             case ToggleContainer.name:
                 const container = this.node.getComponent(ToggleContainer);
                 container.allowSwitchOff = false;
@@ -230,6 +238,7 @@ export class Binding extends Component {
                 ]);
                 break;
         }
+
         this._modeEnums = newEnums;
         // 更新绑定模式枚举
         CCClass.Attr.setClassAttr(this, 'mode', 'enumList', newEnums);
@@ -306,8 +315,9 @@ export class Binding extends Component {
             if (this.componentName === Button.name) return;
 
             let path = this._parent.path;
+            path = this._bindingName === this._bindingType ? path : `${path}.${this._bindingName}`;
             // 通过地址获取默认值
-            let data = decoratorData.getDefaultInEditor(`${path}.${this._bindingName}`);
+            let data = decoratorData.getDefaultInEditor(path);
             if (data != null) {
                 this.setComponentValue(data);
             }
@@ -322,9 +332,6 @@ export class Binding extends Component {
         }
 
         this.initParentDataContext();
-
-        // 上下文数据异常，则不继续执行
-        if (!this._parent) return;
 
         // 设置绑定模式
         switch (this._bindingMode) {
@@ -343,6 +350,13 @@ export class Binding extends Component {
                 this.onComponentCallback();
                 break;
         }
+
+    }
+
+    protected onDestroy(){
+        if (EDITOR) return;
+
+        this._parent?.unregister(this);
     }
 
     protected onEnable() {
@@ -368,29 +382,24 @@ export class Binding extends Component {
             }
         }
 
-        this._parent.addUpdateCallback(this.onUpdateData.bind(this));
+        this._parent.register(this, this.onUpdateData);
     }
 
     private _isObservable = false;
     /** 观察函数 */
     private _reaction = null;
     private onUpdateData() {
-        // 数组类型数据，重新设置绑定属性（重新定位数组元素）
-        if (this._parent.bindDataKind === DataKind.Array) {
-            let index = this._parent.getItemIndex(this.node);
-            this.upperDataContext = this._parent.dataContext[index];
-        }
-        else {
-            this.upperDataContext = this._parent.dataContext;
-        }
+        // 上下文数据异常，则不继续执行
+        if (!this._parent) return;
 
-        if (!this.upperDataContext) return;
+        this._upperData = this._parent.getDataContextInRegister(this);
+        if (!this._upperData) return;
 
-        this._data = this.upperDataContext[this._bindingName];
+        this._data = this._upperData[this._bindingName];
         if (this._isObservable) {
             // 设置观察函数
             this._reaction = observe((operation) => {
-                let data = this.upperDataContext[this._bindingName];
+                let data = this._upperData[this._bindingName];
                 if (!operation) return;
 
                 this.setComponentValue(data);
@@ -456,31 +465,46 @@ export class Binding extends Component {
             case EditBox.name:
                 let editBox = this.node.getComponent(EditBox);
                 editBox.node.on(EditBox.EventType.TEXT_CHANGED, (editBox: EditBox) => {
-                    this.upperDataContext[this._bindingName] = editBox.string;
+                    // this._upperData[this._bindingName] = editBox.string;
+                    if(this._upperData && this._upperData.hasOwnProperty(this._bindingName)){
+                        this._upperData[this._bindingName] = editBox.string;
+                    }
                 }, this);
                 break;
             case Toggle.name:
                 let toggle = this.node.getComponent(Toggle);
                 toggle.node.on(Toggle.EventType.TOGGLE, (toggle: Toggle) => {
-                    this.upperDataContext[this._bindingName] = toggle.isChecked;
+                    //this._upperData[this._bindingName] = toggle.isChecked;
+                    if(this._upperData && this._upperData.hasOwnProperty(this._bindingName)){
+                        this._upperData[this._bindingName] = toggle.isChecked;
+                    }
                 }, this);
                 break;
             case Button.name:
                 let button = this.node.getComponent(Button);
                 button.node.on(Button.EventType.CLICK, (button: Button) => {
-                    this.upperDataContext[this._bindingName](this.customEventData);
+                    //this._upperData[this._bindingName](this.customEventData);
+                    if(this._upperData && this._upperData[this._bindingName] != undefined){
+                        this._upperData[this._bindingName](this.customEventData);
+                    }
                 });
                 break;
             case Slider.name:
                 let slider = this.node.getComponent(Slider);
                 slider.node.on('slide', (slider: Slider) => {
-                    this.upperDataContext[this._bindingName] = slider.progress;
+                    //this._upperData[this._bindingName] = slider.progress;
+                    if(this._upperData && this._upperData.hasOwnProperty(this._bindingName)){
+                        this._upperData[this._bindingName] = slider.progress;
+                    }
                 }, this);
                 break;
             case PageView.name:
                 let pageView = this.node.getComponent(PageView);
                 pageView.node.on(PageView.EventType.PAGE_TURNING, (pageView: PageView) => {
-                    this.upperDataContext[this._bindingName] = pageView.getCurrentPageIndex();
+                    //this._upperData[this._bindingName] = pageView.getCurrentPageIndex();
+                    if(this._upperData && this._upperData.hasOwnProperty(this._bindingName)){
+                        this._upperData[this._bindingName] = pageView.getCurrentPageIndex();
+                    }
                 }, this);
                 break;
             case ToggleContainer.name:
@@ -502,6 +526,9 @@ export class Binding extends Component {
 
         // 获取位置索引
         let index = parent.children.indexOf(event.node);
-        this.upperDataContext[this._bindingName] = index;
+        //this._upperData[this._bindingName] = index;
+        if(this._upperData && this._upperData.hasOwnProperty(this._bindingName)){
+            this._upperData[this._bindingName] = index;
+        }
     }
 }
