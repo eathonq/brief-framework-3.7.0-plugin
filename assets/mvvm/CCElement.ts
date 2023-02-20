@@ -123,7 +123,7 @@ export class CCElement extends Component {
     }
 
     /** 组件上需要监听的属性的数据类型 */
-    protected elementCheckKinds: DataKind[] = [];
+    protected _elementKinds: DataKind[] = [];
 
     /** 绑定方法自定义参数 */
     @property({
@@ -178,7 +178,7 @@ export class CCElement extends Component {
             let findIndex = this._elementEnums.findIndex((item) => {
                 return item.name === this._elementName;
             });
-            if (findIndex >= 0) {
+            if (findIndex != -1) {
                 this.bindingElement = findIndex;
                 return;
             }
@@ -192,7 +192,7 @@ export class CCElement extends Component {
             if (element) {
                 const property = element.binding[this._bindingProperty];
                 if (property) {
-                    this.elementCheckKinds = property.kind;
+                    this._elementKinds = property.kind;
                 }
             }
         }
@@ -217,7 +217,7 @@ export class CCElement extends Component {
             let findIndex = this._propertyEnums.findIndex((item) => {
                 return item.name === this._propertyName;
             });
-            if (findIndex >= 0) {
+            if (findIndex != -1) {
                 this.bindingProperty = findIndex;
                 return;
             }

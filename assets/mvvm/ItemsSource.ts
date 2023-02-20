@@ -100,19 +100,16 @@ export class ItemsSource extends DataContext {
         // 设置绑定数据枚举默认值
         if (this._bindingSelectedName !== '') {
             let findIndex = this._bindingSelectedEnums.findIndex((item) => { return item.name === this._bindingSelectedName; });
-            if (findIndex === -1) {
+            if (findIndex != -1) {
+                this.bindingSelected = findIndex;
+            }
+            else {
                 console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件 ItemsSource 绑定 ${this._bindingSelectedName} 已经不存在`);
                 // 如果只有一个枚举，就设置为默认值
                 if (this._bindingSelectedEnums.length == 1) {
                     this.bindingSelected = 0;
                 }
             }
-            else {
-                this.bindingSelected = findIndex;
-            }
-        }
-        else {
-            this.bindingSelected = 0;
         }
     }
     //#endregion

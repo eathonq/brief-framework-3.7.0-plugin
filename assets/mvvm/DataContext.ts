@@ -163,19 +163,16 @@ export class DataContext extends Component {
         // 设置绑定数据枚举默认值
         if (this._bindingName !== '') {
             let findIndex = this._bindingEnums.findIndex((item) => { return item.name === this._bindingName; });
-            if (findIndex === -1) {
+            if (findIndex != -1) {
+                this.binding = findIndex;
+            }
+            else {
                 console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件 DataContext 绑定 ${this._bindingName} 已经不存在`);
                 // 如果只有一个枚举，就设置为默认值
                 if (this._bindingEnums.length == 1) {
                     this.binding = 0;
                 }
             }
-            else {
-                this.binding = findIndex;
-            }
-        }
-        else {
-            this.binding = 0;
         }
     }
 

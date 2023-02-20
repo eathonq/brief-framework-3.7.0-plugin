@@ -11,7 +11,7 @@ import { Locator } from '../common/Locator';
 import { observe, unobserve } from '../common/ReactiveObserve';
 import { CCElement } from './CCElement';
 import { DataContext } from "./DataContext";
-import { decoratorData, DataKind } from './MVVM';
+import { decoratorData } from './MVVM';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /** 绑定模式 */
@@ -180,7 +180,7 @@ export class Binding extends CCElement {
             let findIndex = this._modeEnums.findIndex((item) => {
                 return item.mode == this._bindingMode;
             });
-            if (findIndex >= 0) {
+            if (findIndex != -1) {
                 this.mode = findIndex;
             }
         }
@@ -191,21 +191,27 @@ export class Binding extends CCElement {
         // 获取绑定属性
         const newEnums = [];
         let isFunc = this._elementName === Button.name;
-        let dataList = isFunc ? decoratorData.getFunctionList(this._parent.bindingType) : decoratorData.getPropertyList(this._parent.bindingType);
-        if (dataList) {
-            let count = 0;
-            dataList.forEach((item) => {
-                if (isFunc) {
-                    if (item.kind === DataKind.Function) {
-                        newEnums.push({ name: item.name, value: count++, type: item.type });
-                    }
-                } else {
-                    if (this.elementCheckKinds.indexOf(item.kind) != -1) {
-                        newEnums.push({ name: item.name, value: count++, type: item.type });
-                    }
-                }
-            });
+        if(isFunc){
+            let dataList = decoratorData.getFunctionList(this._parent.bindingType);
+            if (dataList) {
+                let count = 0;
+                dataList.forEach((item) => {
+                    newEnums.push({ name: item.name, value: count++, type: item.type });
+                });
+            }
         }
+        else{
+            let dataList = decoratorData.getPropertyList(this._parent.bindingType);
+            if (dataList) {
+                let count = 0;
+                dataList.forEach((item) => {
+                    if (this._elementKinds.indexOf(item.kind) != -1) {
+                        newEnums.push({ name: item.name, value: count++, type: item.type });
+                    }
+                });
+            }
+        }
+
         // 更新绑定数据枚举
         this._bindingEnums = newEnums;
         CCClass.Attr.setClassAttr(this, 'binding', 'enumList', newEnums);
@@ -220,15 +226,15 @@ export class Binding extends CCElement {
             let findIndex = this._bindingEnums.findIndex((item) => {
                 return item.name === this._bindingName;
             });
-            if (findIndex === -1) {
+            if (findIndex != -1) {
+                this.binding = findIndex;
+            }
+            else {
                 console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件Binding绑定 ${this._bindingName} 已经不存在`);
                 // 如果只有一个枚举，就设置为默认值
                 if (this._bindingEnums.length == 1) {
                     this.binding = 0;
                 }
-            }
-            else {
-                this.binding = findIndex;
             }
         }
     }
@@ -351,17 +357,13 @@ export class Binding extends CCElement {
     }
 
     private onElementValueChange(value: any) {
-        switch (this._elementName) {
-            case Button.name:
-                if (this._upperData && this._upperData[this._bindingName] != undefined) {
-                    this._upperData[this._bindingName](value);
-                }
-                break;
-            default:
-                if (this._upperData && this._upperData.hasOwnProperty(this._bindingName)) {
-                    this._upperData[this._bindingName] = value;
-                }
-                break;
+        if(this._upperData && Reflect.has(this._upperData, this._bindingName)){
+            if(this._upperData[this._bindingName] instanceof Function){
+                this._upperData[this._bindingName](value);
+            }
+            else{
+                Reflect.set(this._upperData, this._bindingName, value);
+            }
         }
     }
 }

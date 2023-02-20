@@ -7,7 +7,6 @@
 
 import { _decorator, Component, Node, Sprite } from 'cc';
 import { EDITOR } from 'cc/env';
-import { Locator } from '../common/Locator';
 import { i18n } from './LanguageData';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
