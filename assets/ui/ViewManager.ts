@@ -7,6 +7,8 @@
 
 import { _decorator, Node, Component, director, Prefab, instantiate } from 'cc';
 import { EDITOR } from 'cc/env';
+import { MessageBox } from '../common/MessageBox';
+import { Tooltip } from '../common/Tooltip';
 import { ViewBase, ViewEvent, ViewState, ViewType } from './ViewBase';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
@@ -254,6 +256,8 @@ export class ViewManager extends Component {
                 this._instance = newNode.addComponent(ViewManager);
             }
             director.addPersistRootNode(this._instance.node);
+
+            this._instance.init();
         }
         return this._instance;
     }
@@ -317,6 +321,11 @@ export class ViewManager extends Component {
     private tooltipList: TooltipList = new TooltipList();
 
     // onRestore() {}
+
+    private init(){
+        MessageBox.handle = this;
+        Tooltip.handle = this;
+    }
 
     protected onLoad(): void {
         if (EDITOR) return;

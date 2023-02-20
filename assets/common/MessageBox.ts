@@ -5,8 +5,6 @@
  * update = 2023-01-30 16:14
  */
 
-import { ViewManager } from "../ui/ViewManager";
-
 /** 消息框按钮 */
 export const enum MessageBoxButtons {
     /* 消息框无按钮。 */
@@ -52,8 +50,15 @@ export type MessageBoxData = {
     resolve?: (result: MessageBoxResult) => void;
 }
 
+type MessageBoxHandle = {
+    showDialog: (name?: string, data?: any) => void;
+    closeDialog: (name?: string, data?: any) => void;
+};
+
 /** 消息框 */
 export class MessageBox {
+    static handle: MessageBoxHandle = null;
+
     /**
      * 显示对话框
      * @param content 消息内容 
@@ -64,9 +69,15 @@ export class MessageBox {
      */
     static async show(content: string, title?: string, buttons?: MessageBoxButtons, dialog?: string) {
         if (buttons == undefined) buttons = MessageBoxButtons.OK;
-        return new Promise<MessageBoxResult>((resolve, reject) => {
+        return new Promise<MessageBoxResult>((resolve) => {
             let data: MessageBoxData = { title, content, buttons, resolve };
-            ViewManager.instance.showDialog(dialog, data);
+            //this.handle.showDialog(dialog, data);
+            if (this.handle) {
+                this.handle.showDialog(dialog, data);
+            }
+            else {
+                resolve(MessageBoxResult.OK);
+            }
         });
     }
 
@@ -78,9 +89,15 @@ export class MessageBox {
      */
     static async dialog(name: string, data?: any) {
         if (!data) data = {};
-        return new Promise<MessageBoxResult>((resolve, reject) => {
+        return new Promise<MessageBoxResult>((resolve) => {
             data.resolve = resolve;
-            ViewManager.instance.showDialog(name, data);
+            //this.handle.showDialog(name, data);
+            if (this.handle) {
+                this.handle.showDialog(name, data);
+            }
+            else {
+                resolve(MessageBoxResult.OK);
+            }
         });
     }
 
@@ -89,6 +106,6 @@ export class MessageBox {
      * @param dialog 对话框类型名称 
      */
     static close(dialog: string) {
-        ViewManager.instance.closeDialog(dialog);
+        this.handle?.closeDialog(dialog);
     }
 }

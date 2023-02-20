@@ -5,8 +5,6 @@
  * update = 2023-01-30 16:14
  */
 
-import { ViewManager } from "../ui/ViewManager";
-
 /** 提示框数据 */
 export type TooltipData = {
     /** 内容 */
@@ -15,9 +13,15 @@ export type TooltipData = {
      resolve?: () => void;
 }
 
+type TooltipHandle = {
+    showTooltip: (name?: string, data?: any) => void;
+    closeTooltip: (name?: string, data?: any) => void;
+};
+
 /** 提示框 */
 export class Tooltip {
-    private static timer: number;
+    static handle: TooltipHandle = null;
+    private static timer: any = null;
 
     /**
      * 显示提示框
@@ -32,11 +36,11 @@ export class Tooltip {
                 Tooltip.timer = null;
             }
         } };
-        ViewManager.instance.showTooltip(tooltip, data);
+        this.handle?.showTooltip(tooltip, data);
         if (timeouts) {
             clearTimeout(Tooltip.timer);
             Tooltip.timer = setTimeout(() => {
-                ViewManager.instance.closeTooltip(tooltip);
+                this.handle?.closeTooltip(tooltip);
                 Tooltip.timer = null;
             }, timeouts * 1000);
         }
@@ -48,7 +52,7 @@ export class Tooltip {
      * @param data 提示框数据
      */
     static tip(name: string, data?: any) {
-        ViewManager.instance.showTooltip(name, data);
+        this.handle?.showTooltip(name, data);
     }
 
     /**
@@ -56,6 +60,6 @@ export class Tooltip {
      * @param name 提示框类型名称
      */
     static close(name: string) {
-        ViewManager.instance.closeTooltip(name);
+        this.handle?.closeTooltip(name);
     }
 }
