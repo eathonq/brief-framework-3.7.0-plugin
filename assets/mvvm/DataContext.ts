@@ -7,7 +7,7 @@
 
 import { _decorator, Component, Node, Enum, CCClass } from 'cc';
 import { EDITOR } from 'cc/env';
-import { Locator } from '../common/Locator';
+import { Locator } from '../cocos/Locator';
 import { observe } from '../common/ReactiveObserve';
 import { decoratorData, DataKind } from './MVVM';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;

@@ -6,7 +6,7 @@
  */
 
 import { sys } from 'cc';
-import { IStorage, platformInit } from '../../common/Configuration';
+import { IStorage, storageInit } from '../../common/Configuration';
 
 let checkWechatGame = (): boolean => { return sys.platform == sys.Platform.WECHAT_GAME };
 
@@ -16,6 +16,7 @@ class WechatStorage implements IStorage {
     //#region IStorage 实现
     getItem(key: string, def = null): any {
         if (checkWechatGame()) {
+            //@ts-ignore
             let value = wx.getStorageSync(key);
             //console.log(`-->wx get--${key} ,data-- ${data}`);
             if (!value) {
@@ -32,6 +33,7 @@ class WechatStorage implements IStorage {
 
     setItem(key: string, data: any) {
         if (checkWechatGame()) {
+            //@ts-ignore
             wx.setStorage({
                 key: key, data: data, success(res) {
                     //console.log(`-->wx set--${key} ,data-- ${data}`);
@@ -42,6 +44,7 @@ class WechatStorage implements IStorage {
 
     removeItem(key: string) {
         if (checkWechatGame()) {
+            //@ts-ignore
             wx.removeStorage({
                 key: key,
                 success(res) {
@@ -53,6 +56,7 @@ class WechatStorage implements IStorage {
 
     hasItem(key: string) {
         if (checkWechatGame()) {
+            //@ts-ignore
             return wx.getStorage({ key: key, }) != undefined;
         }
         return false;
@@ -60,6 +64,7 @@ class WechatStorage implements IStorage {
 
     keys(): string[] {
         if (checkWechatGame()) {
+            //@ts-ignore
             const res = wx.getStorageInfoSync();
             return res.keys;
         }
@@ -68,12 +73,14 @@ class WechatStorage implements IStorage {
 
     clear(): void {
         if (checkWechatGame()) {
+            //@ts-ignore
             wx.clearStorage();
         }
     }
 
     currentSize(): number {
         if (checkWechatGame()) {
+            //@ts-ignore
             const res = wx.getStorageInfoSync();
             return res.currentSize;
         }
@@ -82,6 +89,7 @@ class WechatStorage implements IStorage {
 
     limitSize(): number {
         if (checkWechatGame()) {
+            //@ts-ignore
             const res = wx.getStorageInfoSync();
             return res.limitSize;
         }
@@ -92,5 +100,5 @@ class WechatStorage implements IStorage {
 }
 
 if (checkWechatGame()) {
-    platformInit(new WechatStorage());
+    storageInit(new WechatStorage, 2);
 }

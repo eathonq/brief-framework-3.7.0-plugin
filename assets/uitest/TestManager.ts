@@ -32,8 +32,8 @@ type TestInfo = {
 
 /** 测试管理 */
 @ccclass('brief.TestManager')
-@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/test-ui-ce-shi-kuang-jia/testmanager')
-@menu('Brief/Test/TestManager')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/uitest-ui-ce-shi/testmanager')
+@menu('Brief/UITest/TestManager')
 export class TestManager extends Component {
 
     //#region instance

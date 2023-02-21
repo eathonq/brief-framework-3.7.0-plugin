@@ -17,9 +17,9 @@ import { _decorator, Component, Node, Enum, ScrollView, UITransform, Widget, Scr
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 @ccclass('brief.ScrollViewDirection')
-@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/ui-zu-jian-yu-kuo-zhan/scrollviewdirection')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/cocos-ji-chu-zu-jian/scrollviewdirection')
 @executeInEditMode
-@menu('Brief/UI/ScrollViewDirection')
+@menu('Brief/Cocos/ScrollViewDirection')
 export class ScrollViewDirection extends Component {
 
     @property({

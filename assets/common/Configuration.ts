@@ -5,8 +5,6 @@
  * update = 2023-02-03 14:58
  */
 
-import { sys } from "cc";
-
 /** 本地存储接口 */
 export interface IStorage {
     /**
@@ -44,11 +42,11 @@ export interface IStorage {
     clear(): void;
 }
 
-/** 本地存储 */
-class LocalStorage implements IStorage {
+/** Web存储 */
+class WebStorage implements IStorage {
     getItem(key: string, def?: any): any {
-        let value = sys.localStorage.getItem(key);
-        if (value === null) {
+        let value = localStorage.getItem(key);
+        if (value === undefined) {
             if (def !== undefined)
                 return def;
             else
@@ -58,67 +56,41 @@ class LocalStorage implements IStorage {
     }
 
     setItem(key: string, data: any): void {
-        sys.localStorage.setItem(key, String(data));
+        localStorage.setItem(key, String(data));
     }
 
     removeItem(key: string): void {
-        sys.localStorage.removeItem(key);
+        localStorage.removeItem(key);
     }
 
     hasItem(key: string): boolean {
-        return sys.localStorage.getItem(key) !== null;
+        return localStorage.getItem(key) !== null;
     }
 
     keys(): string[] {
         let keyArray: string[] = [];
-        for (let i = 0; i < sys.localStorage.length; i++) {
-            keyArray.push(sys.localStorage.key(i));
+        for (let i = 0; i < localStorage.length; i++) {
+            keyArray.push(localStorage.key(i));
         }
         return keyArray;
     }
 
     clear(): void {
-        sys.localStorage.clear();
+        localStorage.clear();
     }
 }
 
-/** 平台存储 */
-class PlatformStorage implements IStorage {
-    //#region instance
-    private static _instance: PlatformStorage = null;
-    static get instance(): PlatformStorage {
-        if (!this._instance) {
-            this._instance = new PlatformStorage();
-            //this._instance.init();
-        }
-        return this._instance;
-    }
-    //#endregion
-
-    private _storage: IStorage = new LocalStorage();
-
-    init(storage: IStorage): void {
-        if (storage)
-            this._storage = storage;
-    }
-
-    getItem(key: string, def?: any): any {
-        return this._storage.getItem(key, def);
-    }
-    setItem(key: string, data: any): void {
-        this._storage.setItem(key, data);
-    }
-    removeItem(key: string): void {
-        this._storage.removeItem(key);
-    }
-    hasItem(key: string): boolean {
-        return this._storage.hasItem(key);
-    }
-    keys(): string[] {
-        return this._storage.keys();
-    }
-    clear(): void {
-        this._storage.clear();
+let _storageLevel = -1;
+let _storage: IStorage = new WebStorage();
+/** 
+ * 存储方式初始化
+ * @param storage 平台存储
+ * @param level 平台等级，值越大优先级越高
+ */
+export function storageInit(storage: IStorage, level:number = 0) {
+    if (storage && level > _storageLevel){
+        _storage = storage;
+        _storageLevel = level;
     }
 }
 
@@ -141,7 +113,7 @@ class Configuration implements IStorage {
     private _syncMark: { [key: string]: boolean } = {};
     /** 是否需要保存 */
     private _markSave: boolean = false;
-    private _configStorage: IStorage = PlatformStorage.instance;
+    //private _configStorage: IStorage = _storage;
 
     private _isInit = false;
     private init() {
@@ -163,7 +135,7 @@ class Configuration implements IStorage {
             if (!this._syncMark[key]) {
                 this._syncMark[key] = true;
 
-                this._configStorage.setItem(key, JSON.stringify(this._cacheData[key]));
+                _storage.setItem(key, JSON.stringify(this._cacheData[key]));
             }
         }
     }
@@ -174,7 +146,7 @@ class Configuration implements IStorage {
             value = this._cacheData[key];
         }
         else {
-            const jsonItem = this._configStorage.getItem(key);
+            const jsonItem = _storage.getItem(key);
             if (jsonItem) {
                 value = JSON.parse(jsonItem);
                 this._cacheData[key] = value;
@@ -198,54 +170,38 @@ class Configuration implements IStorage {
     removeItem(key: string): void {
         delete this._cacheData[key];
         delete this._syncMark[key];
-        this._configStorage.removeItem(key);
+        _storage.removeItem(key);
     }
 
     hasItem(key: string): boolean {
-        return this._configStorage.hasItem(key);
+        if (this._cacheData[key] != undefined) {
+            return true;
+        }
+        return _storage.hasItem(key);
     }
 
     keys(): string[] {
-        return this._configStorage.keys();
+        let keyArray: string[] = [];
+        for (let key in this._cacheData) {
+            keyArray.push(key);
+        }
+        let configKeys = _storage.keys();
+        for (let i = 0; i < configKeys.length; i++) {
+            let key = configKeys[i];
+            if (this._cacheData[key] == undefined) {
+                keyArray.push(key);
+            }
+        }
+        return keyArray;
     }
 
     clear(): void {
         this._cacheData = {};
         this._syncMark = {};
         this._markSave = false;
-        this._configStorage.clear();
+        _storage.clear();
     }
 
-}
-
-/** 多平台初始化 */
-export function platformInit(storage: IStorage) {
-    PlatformStorage.instance.init(storage);
-}
-
-/** Map转Object */
-export function mapToObj(map: Map<string, any>): any {
-    let obj = Object.create(null);
-    for (let [k, v] of map) {
-        obj[k] = v;
-    }
-    return obj;
-}
-
-/** Object转Map */
-export function objToMap(obj: any): Map<string, any> {
-    let map = new Map();
-    for (let k of Object.keys(obj)) {
-        map.set(k, obj[k]);
-    }
-    return map;
-}
-
-/** Object转Map */
-export function objToMapSet(obj: any, map: Map<string, any>) {
-    for (let k of Object.keys(obj)) {
-        map.set(k, obj[k]);
-    }
 }
 
 /** 

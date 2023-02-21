@@ -5,8 +5,6 @@
  * update = 2023-02-02 17:15
  */
 
-import { sys } from "cc";
-
 /**
  * object 数据转换成 http 请求参数字符串
  * @param obj object 数据
@@ -65,6 +63,9 @@ export let openLocalFile = (callback: (file: File) => void) => {
 // https://blog.csdn.net/grimraider/article/details/106378809
 
 class HttpHelper {
+
+    static isNative = false;
+
     /**
      * get请求
      * @param url 请求地址 
@@ -115,7 +116,7 @@ class HttpHelper {
         xhr.open("POST", url, true);
         // https://developer.mozilla.org/zh-CN/docs/Web/HTTP/CORS
         xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        if (sys.isNative) {
+        if (this.isNative) {
             xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
             xhr.setRequestHeader('Access-Control-Allow-Methods', 'GET, POST');
             xhr.setRequestHeader('Access-Control-Allow-Headers', 'x-requested-with,content-type');
@@ -200,6 +201,42 @@ class HttpHelper {
             this.upload(url, file, (response: string, errStatus?: number) => {
                 resolve({ response, errStatus });
             });
+        });
+    }
+
+    /**
+     * 下载文件
+     * @param url 请求地址
+     * @param callback 回调函数
+     * @param responseType 返回类型
+     */
+    static download(url: string, callback: (response: string, errStatus?: number) => void, responseType: XMLHttpRequestResponseType = "text") {
+        let xhr = new XMLHttpRequest();
+        xhr.open("GET", url, true);
+        xhr.responseType = responseType;
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                callback(xhr.response);
+            }
+            else if (xhr.status != 200) {
+                callback(xhr.response, xhr.status);
+            }
+        }
+        xhr.timeout = 5000;
+        xhr.send();
+    }
+
+    /**
+     * 下载文件
+     * @param url 请求地址
+     * @param responseType 返回类型 
+     * @returns Promise<{ response: string, errStatus?: number }>
+     */
+    static async downloadAsync(url: string, responseType: XMLHttpRequestResponseType = "text") {
+        return new Promise<{ response: string, errStatus?: number }>((resolve, reject) => {
+            this.download(url, (response: string, errStatus?: number) => {
+                resolve({ response, errStatus });
+            }, responseType);
         });
     }
 }

@@ -46,9 +46,9 @@ export enum ViewState {
 
 /** 视图基类 */
 @ccclass('brief.ViewBase')
-@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/ui-zu-jian-yu-kuo-zhan/viewbase')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/cocos-ji-chu-zu-jian/viewbase')
 @executeInEditMode
-@menu('Brief/UI/ViewBase')
+@menu('Brief/Cocos/ViewBase')
 export class ViewBase extends Component {
 
     @property({
@@ -78,8 +78,6 @@ export class ViewBase extends Component {
     }
 
     private checkEditorComponent(isTitle = false) {
-        if (!EDITOR) return;
-
         if (this.viewName == "") {
             this.viewName = this.node.name;
         }
@@ -96,7 +94,9 @@ export class ViewBase extends Component {
     //#endregion
 
     protected onLoad() {
-        this.checkEditorComponent();
+        if(EDITOR){
+            this.checkEditorComponent();
+        }
     }
 
     protected doClose: (name: string, data?: any) => void = null;

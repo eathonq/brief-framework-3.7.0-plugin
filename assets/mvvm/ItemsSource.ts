@@ -7,7 +7,7 @@
 
 import { _decorator, Node, instantiate, NodePool, Enum, CCClass } from 'cc';
 import { EDITOR } from 'cc/env';
-import { Locator } from '../common/Locator';
+import { Locator } from '../cocos/Locator';
 import { observe, reactive } from '../common/ReactiveObserve';
 import { DataContext } from "./DataContext";
 import { decoratorData, DataKind } from './MVVM';

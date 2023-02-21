@@ -108,6 +108,7 @@ class GameEvent {
 
 /**
  * 游戏事件
+ * @info cocos 自带 EventTarget ，建议优先使用 cocos 的 EventTarget
  * @example
  * gameEvent.on(GameEvent.EVENT_NAME, this.callback, this);
  * gameEvent.emit(GameEvent.EVENT_NAME, arg1, arg2, arg3);
@@ -115,11 +116,11 @@ class GameEvent {
  */
 export const gameEvent = new GameEvent();
 
-import { EventTarget } from 'cc';
-/**
- * cocos 事件
- * @url https://docs.cocos.com/creator/manual/zh/engine/event/event-emit.html?h=event
- * @example
- * eventTarget.on(GameEvent.EVENT_NAME, this.callback, this);
- */
-export const eventTarget = new EventTarget();
+// import { EventTarget } from 'cc';
+// /**
+//  * cocos 事件
+//  * @url https://docs.cocos.com/creator/manual/zh/engine/event/event-emit.html?h=event
+//  * @example
+//  * eventTarget.on(GameEvent.EVENT_NAME, this.callback, this);
+//  */
+// export const eventTarget = new EventTarget();

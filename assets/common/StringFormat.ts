@@ -66,8 +66,7 @@ class StringFormat {
      * @returns string
      */
     static replaceBlank(str: string, rep: string = ""): string {
-        var pattern: RegExp = /[\s\p{Zs}]/g;
-        return str.replace(pattern, rep);
+        return str.replace(/[\s\p{Zs}]/g, rep);
     }
 
     /**
@@ -76,11 +75,8 @@ class StringFormat {
      * @returns string
      */
     static leftTrim(str: string): string {
-        if (str == null) {
-            return null;
-        }
-        var pattern: RegExp = /^\this.s*/;
-        return str.replace(pattern, "");
+        // 使用正则去除左空格
+        return str.replace(/(^\s*)/g, "");
     }
 
     /**
@@ -89,11 +85,8 @@ class StringFormat {
      * @returns string
      */
     static rightTrim(str: string): string {
-        if (str == null) {
-            return null;
-        }
-        var pattern: RegExp = /\this.s*this.$/;
-        return str.replace(pattern, "");
+        // 使用正则去除右空格
+        return str.replace(/(\s*$)/g, "");
     }
 
     /**
@@ -156,7 +149,7 @@ class StringFormat {
             M: date.getMonth() + 1,
             d: date.getDate(),
             H: date.getHours(),
-            h: date.getHours() % 12 === 0 ? 12 : date.getHours() % 12,
+            h: date.getHours() % 12,
             m: date.getMinutes(),
             s: date.getSeconds(),
             f: date.getMilliseconds(),
@@ -164,7 +157,7 @@ class StringFormat {
             MM: ("" + (date.getMonth() + 101)).substring(1),
             dd: ("" + (date.getDate() + 100)).substring(1),
             HH: ("" + (date.getHours() + 100)).substring(1),
-            hh: ("" + (date.getHours() % 12 === 0 ? 12 : date.getHours() % 12 + 100)).substring(1),
+            hh: ("" + (date.getHours() % 12 + 100)).substring(1),
             mm: ("" + (date.getMinutes() + 100)).substring(1),
             ss: ("" + (date.getSeconds() + 100)).substring(1),
             fff: ("" + (date.getMilliseconds() + 1000)).substring(1)
@@ -187,7 +180,6 @@ class StringFormat {
 
     private static _counts = [1000, 1000000, 1000000000, 1000000000000];
     private static _units = ['', 'K', 'M', 'B', 'T'];
-
     /**
      * 将数字缩短显示为K,M,B,T单位
      * @param value 数字
@@ -195,30 +187,7 @@ class StringFormat {
      * @returns string
      */
     static kmbt(value: number, fixNum: number = 2): string {
-        // //10^4=万, 10^8=亿,10^12=兆,10^16=京，
-        // let counts = [1000, 1000000, 1000000000, 1000000000000];
-        // let units = ['', 'K', 'M', 'B', 'T'];
-
-        // switch (lang) {
-        //     case 'zh':
-        //         //10^4=万, 10^8=亿,10^12=兆,10^16=京，
-        //         let counts = [10000, 100000000, 1000000000000, 10000000000000000];
-        //         let units = ['', '万', '亿', '兆', '京'];
-        //         break;
-        //     default:
-        //         break;
-        // }
         return this.compressUnit(value, this._counts, this._units, fixNum);
-    }
-
-    /**
-     * 设置压缩任意单位
-     * @param counts 压缩单位数组
-     * @param units 压缩单位文字数组
-     */
-    static setKmbt(counts: number[], units: string[]): void {
-        this._counts = counts;
-        this._units = units;
     }
 
     /**
@@ -228,6 +197,9 @@ class StringFormat {
      * @param units 压缩单位文字数组
      * @param fixNum 小数点后保留位数
      * @returns string
+     * @example
+     * 1. compressUnit(123456, [1000, 1000000, 1000000000, 1000000000000], ['', 'K', 'M', 'B', 'T']) // 123.46K
+     * 2. compressUnit(123456, [10000, 100000000, 1000000000000, 10000000000000000], ['', '万', '亿', '兆', '京']) // 1.23万
      */
     static compressUnit(value: number, counts: number[], units: string[], fixNum: number = 2): string {
         let res: string;

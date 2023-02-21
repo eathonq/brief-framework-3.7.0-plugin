@@ -20,9 +20,9 @@ export enum Direction {
  * 滚动视图，可以动态设置子节点opacity
  */
 @ccclass('brief.ScrollViewDynamic')
-@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/ui-zu-jian-yu-kuo-zhan/scrollviewdynamic')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/cocos-ji-chu-zu-jian/scrollviewdynamic')
 @executeInEditMode
-@menu('Brief/UI/ScrollViewDynamic')
+@menu('Brief/Cocos/ScrollViewDynamic')
 export class ScrollViewDynamic extends Component {
 
     //#region  组件属性

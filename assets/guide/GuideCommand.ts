@@ -6,8 +6,8 @@
  */
 
 import { Component, director, Node } from "cc";
-import { Locator } from "../common/Locator";
-import { ViewManager } from "../ui/ViewManager";
+import { Locator } from "../cocos/Locator";
+import { ViewManager } from "../cocos/ViewManager";
 
 export class GuideMaskBase extends Component {
     /**
@@ -122,7 +122,7 @@ export class GuideCommand {
         });
     }
 
-    private timer: number;
+    private timer: any;
     private async doTooltip(command: TooltipCommandData) {
         return new Promise<void>(async (resolve, reject) => {
             ViewManager.instance.showTooltip(command.tooltip, {

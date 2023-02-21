@@ -238,9 +238,9 @@ class ViewStack {
 
 /** 视图管理 */
 @ccclass('brief.ViewManager')
-@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/ui-zu-jian-yu-kuo-zhan/viewmanager')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/cocos-ji-chu-zu-jian/viewmanager')
 @executeInEditMode
-@menu('Brief/UI/ViewManager')
+@menu('Brief/Cocos/ViewManager')
 export class ViewManager extends Component {
     //#region instance
     private static _instance: ViewManager = null;
@@ -323,8 +323,8 @@ export class ViewManager extends Component {
     // onRestore() {}
 
     private init(){
-        MessageBox.handle = this;
-        Tooltip.handle = this;
+        MessageBox.handle = ViewManager.instance;
+        Tooltip.handle = ViewManager.instance;
     }
 
     protected onLoad(): void {

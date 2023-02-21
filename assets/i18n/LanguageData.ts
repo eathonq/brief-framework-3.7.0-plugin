@@ -9,7 +9,7 @@ import { director, SpriteFrame } from "cc";
 import { EDITOR } from "cc/env";
 import { config } from "../common/Configuration";
 import { stringFormat } from "../common/StringFormat";
-import { ResourcesUtil } from "../common/ResourcesUtil";
+import { ResourcesUtil } from "../cocos/ResourcesUtil";
 import { LocalizedLabel } from "./LocalizedLabel";
 import { LocalizedSprite } from "./LocalizedSprite";
 

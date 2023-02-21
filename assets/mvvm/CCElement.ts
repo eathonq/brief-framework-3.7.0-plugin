@@ -7,7 +7,7 @@
 
 import { _decorator, Component, Node, Label, RichText, EditBox, Toggle, Button, Slider, ProgressBar, PageView, Sprite, ToggleContainer, Enum, CCClass, EventHandler } from 'cc';
 import { EDITOR } from 'cc/env';
-import { ResourcesUtil } from '../common/ResourcesUtil';
+import { ResourcesUtil } from '../cocos/ResourcesUtil';
 import { DataKind } from './MVVM';
 const { ccclass, property, executeInEditMode } = _decorator;
 

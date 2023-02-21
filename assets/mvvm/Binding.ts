@@ -7,7 +7,7 @@
 
 import { _decorator, Node, Component, Enum, Sprite, Button, CCClass, Label, ProgressBar } from 'cc';
 import { EDITOR } from 'cc/env';
-import { Locator } from '../common/Locator';
+import { Locator } from '../cocos/Locator';
 import { observe, unobserve } from '../common/ReactiveObserve';
 import { CCElement } from './CCElement';
 import { DataContext } from "./DataContext";

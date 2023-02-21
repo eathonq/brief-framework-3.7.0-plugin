@@ -8,7 +8,7 @@
 import { _decorator, Node, AudioClip, AudioSource, Component, director } from "cc";
 import { EDITOR } from "cc/env";
 import { config } from "../common/Configuration";
-import { ResourcesUtil } from "../common/ResourcesUtil";
+import { ResourcesUtil } from "./ResourcesUtil";
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 const AUDIO_CONFIG = "AUDIO_CONFIG";
@@ -34,9 +34,9 @@ class SoundAudioSource {
 
 /** 音频管理器 */
 @ccclass('brief.AudioManager')
-@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/ui-zu-jian-yu-kuo-zhan/audiomanager')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/cocos-ji-chu-zu-jian/audiomanager')
 @executeInEditMode
-@menu('Brief/UI/AudioManager')
+@menu('Brief/Cocos/AudioManager')
 export class AudioManager extends Component {
     //#region instance
     private static _instance: AudioManager = null;
