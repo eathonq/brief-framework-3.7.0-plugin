@@ -165,7 +165,7 @@ export class CCElement extends Component {
             let count = 0;
             for (let i = 0; i < this._identifyList.length; i++) {
                 const element = this._identifyList[i];
-                newEnums.push({ name: element.component.name, value: count });
+                newEnums.push({ name: element.component.name, value: count++ });
                 count++;
             }
         }

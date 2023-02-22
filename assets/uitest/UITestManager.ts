@@ -32,7 +32,7 @@ type TestInfo = {
 
 /** UI测试管理 */
 @ccclass('brief.UITestManager')
-@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/uitest-ui-ce-shi/uitestmanager')
+@help('https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/uitest/uitestmanager')
 @menu('Brief/UITest/UITestManager')
 export class UITestManager extends Component {
 

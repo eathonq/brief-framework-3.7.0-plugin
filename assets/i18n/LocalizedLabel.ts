@@ -7,7 +7,7 @@
 
 import { _decorator, Component, Label, RichText, EditBox } from 'cc';
 import { EDITOR } from 'cc/env';
-import { i18n } from './LanguageData';
+import { i18n } from './I18n';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /** 组件检测数组 */
@@ -22,7 +22,7 @@ const COMP_ARRAY_CHECK: { type: any, property: string }[] = [
  * i18n 本地化文本(支持Label,RichText,EditBox)
  */
 @ccclass('brief.LocalizedLabel')
-@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/i18n-duo-yu-yan-guan-li/localizedlabel')
+@help('https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/i18n/localizedlabel')
 @executeInEditMode
 @menu('Brief/I18n/LocalizedLabel')
 export class LocalizedLabel extends Component {
@@ -80,9 +80,7 @@ export class LocalizedLabel extends Component {
 
     protected onLoad() {
         this.checkEditorComponent();
-        if (!i18n.ready) {
-            i18n.init();
-        }
+        i18n.init();
         this.resetValue();
     }
 

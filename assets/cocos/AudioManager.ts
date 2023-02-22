@@ -34,7 +34,7 @@ class SoundAudioSource {
 
 /** 音频管理器 */
 @ccclass('brief.AudioManager')
-@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/cocos-ji-chu-zu-jian/audiomanager')
+@help('https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/cocos/audiomanager')
 @executeInEditMode
 @menu('Brief/Cocos/AudioManager')
 export class AudioManager extends Component {

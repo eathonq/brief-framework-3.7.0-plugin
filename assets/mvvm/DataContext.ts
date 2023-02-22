@@ -17,7 +17,7 @@ const { ccclass, help, executeInEditMode, menu, property } = _decorator;
  * 绑定上级数据中的对象数据到组件上
  */
 @ccclass('brief.DataContext')
-@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/mvvm-mvvm-kuang-jia/datacontext')
+@help('https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/mvvm/datacontext')
 @executeInEditMode
 @menu('Brief/MVVM/DataContext')
 export class DataContext extends Component {

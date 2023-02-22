@@ -46,7 +46,7 @@ export enum ViewState {
 
 /** 视图基类 */
 @ccclass('brief.ViewBase')
-@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/cocos-ji-chu-zu-jian/viewbase')
+@help('https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/cocos/viewbase')
 @executeInEditMode
 @menu('Brief/Cocos/ViewBase')
 export class ViewBase extends Component {

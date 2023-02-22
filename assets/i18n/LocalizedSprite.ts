@@ -7,7 +7,7 @@
 
 import { _decorator, Component, Node, Sprite } from 'cc';
 import { EDITOR } from 'cc/env';
-import { i18n } from './LanguageData';
+import { i18n } from './I18n';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /**
@@ -15,7 +15,7 @@ const { ccclass, help, executeInEditMode, menu, property } = _decorator;
  * i18n 本地化图片(支持Sprite)
  */
 @ccclass('brief.LocalizedSprite')
-@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/i18n-duo-yu-yan-guan-li/localizedsprite')
+@help('https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/i18n/localizedsprite')
 @executeInEditMode
 @menu('Brief/I18n/LocalizedSprite')
 export class LocalizedSprite extends Component {
@@ -86,9 +86,7 @@ export class LocalizedSprite extends Component {
 
     protected onLoad() {
         this.checkEditorComponent();
-        if (!i18n.ready) {
-            i18n.init();
-        }
+        i18n.init();
         this.resetValue();
     }
 

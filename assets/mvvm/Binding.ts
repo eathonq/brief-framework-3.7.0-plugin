@@ -31,7 +31,7 @@ export enum BindingMode {
  * 绑定上级数据中的基础类型数据（String、Number、Boolean、Function）到组件上
  */
 @ccclass('brief.Binding')
-@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/mvvm-mvvm-kuang-jia/binding')
+@help('https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/mvvm/binding')
 @executeInEditMode
 @menu('Brief/MVVM/Binding')
 export class Binding extends CCElement {
