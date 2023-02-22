@@ -8,6 +8,7 @@
 import { Component, director, Node } from "cc";
 import { Locator } from "../cocos/Locator";
 import { ViewManager } from "../cocos/ViewManager";
+import { ClickCommandData, GuideStep, TooltipCommandData } from "./GuideTask";
 
 export class GuideMaskBase extends Component {
     /**
@@ -25,64 +26,10 @@ export class GuideMaskBase extends Component {
     }
 }
 
-/** 引导类型 */
-export enum GuideType {
-    /** 点击引导 */
-    Click = 0,
-    /** 
-     * 提示引导
-     * @info 该类型引导为异步操作，需要在引导结束后调用resolve()方法
-     * @example
-     * class TooltipGuide extends Component {
-     *    private _data: TooltipData = null;
-     *    protected onLoad() {
-     *       this.node.on(ViewEvent, (state: ViewState, data: any) => {
-     *          switch (state) {
-     *             ...
-     *             case ViewState.Close:
-     *             case ViewState.Hide:
-     *                this._data?.resolve?.();
-     *                break;
-     *          }
-     *       }, this);
-     *    }
-     * }
-     */
-    Tooltip = 1,
-    /** 滑动引导 */
-    Slide = 3,
-}
-
-type ClickCommandData = {
-    type: GuideType.Click;
-    /** 
-     * 按钮地址
-     * @example
-     * 1. 'Content/button1' 一级查询，等价于 node.getChildByName('Content').getChildByName('button1')
-     * 2. 'Content>button2' 多级查询，等价于 node.getChildByName('Content').getChildByName('Item').getChildByName('button2')
-     */
-    path: string;
-}
-
-type TooltipCommandData = {
-    type: GuideType.Tooltip;
-    /** 提示窗名称（类型） */
-    tooltip: string;
-    /** 提示窗显示内容 */
-    content: any;
-    /** 提示窗显示超时 */
-    timeout?: number;
-}
-
-type SlideCommandData = {
-    type: GuideType.Slide;
-    data: string;
-}
-
-export type CommandData = ClickCommandData | TooltipCommandData | SlideCommandData;
-
 /**
  * 引导命令
+ * @param guideMask 引导遮罩
+ * @info 用于执行引导步骤，引导步骤数据转换成引导命令操作
  */
 export class GuideCommand {
     constructor(guideMask: GuideMaskBase) {
@@ -91,17 +38,16 @@ export class GuideCommand {
 
     private _guideMask: GuideMaskBase = null;
 
-    async doCommand(command: any) {
-        switch (command.type) {
-            case GuideType.Click:
-                await this.doClick(command);
-                break;
-            case GuideType.Tooltip:
-                await this.doTooltip(command);
-                break;
-            case GuideType.Slide:
-                await this.doSlide(command);
-                break;
+    async doStep(step: GuideStep) {
+        if(step.click){
+            await this.doClick(step.click);
+        }
+        else if(step.tooltip){
+            // 默认数据设置
+            // if(!step.tooltip.type){
+            //     step.tooltip.type = "default";
+            // }
+            await this.doTooltip(step.tooltip);
         }
     }
 
@@ -125,7 +71,7 @@ export class GuideCommand {
     private timer: any;
     private async doTooltip(command: TooltipCommandData) {
         return new Promise<void>(async (resolve, reject) => {
-            ViewManager.instance.showTooltip(command.tooltip, {
+            ViewManager.instance.showTooltip(command.type, {
                 content: command.content, resolve: () => {
                     if (this.timer) {
                         clearTimeout(this.timer);
@@ -137,17 +83,10 @@ export class GuideCommand {
             if (command.timeout) {
                 clearTimeout(this.timer);
                 this.timer = setTimeout(() => {
-                    ViewManager.instance.closeTooltip(command.tooltip);
+                    ViewManager.instance.closeTooltip(command.type);
                     this.timer = null;
                 }, command.timeout);
             }
-        });
-    }
-
-    private async doSlide(command: SlideCommandData) {
-        return new Promise<void>(async (resolve, reject) => {
-            // TODO
-            resolve();
         });
     }
 }

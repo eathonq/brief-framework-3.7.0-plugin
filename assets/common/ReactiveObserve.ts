@@ -511,6 +511,14 @@ export function raw<T extends object>(proxy: T): T {
  * @param fn 观察函数
  * @param thisArgument this指向
  * @returns 观察函数，让外部也可以手动调用
+ * @example
+ * const state = reactive({ a: 0, b: 0 });
+ * const reaction = observe((operation) => {
+ *    let a = state.a;          // 这里会收集 a 变化的通知
+ *    if(!operation) return;    // 这里来管理依赖的收集（之后都会被忽略）
+ *    
+ *    let b = state.b;          // 这里不收集 b 变化的通知
+ * });
  */
 export function observe(fn: (operation?: Operation) => void, thisArgument?: any): ReactionFunction {
     // reaction是包装了原始函数之后的观察函数

@@ -30,23 +30,23 @@ type TestInfo = {
     timeout?: number;
 }
 
-/** 测试管理 */
-@ccclass('brief.TestManager')
-@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/uitest-ui-ce-shi/testmanager')
-@menu('Brief/UITest/TestManager')
-export class TestManager extends Component {
+/** UI测试管理 */
+@ccclass('brief.UITestManager')
+@help('https://app.gitbook.com/s/VKw0ct3rsRsFR5pXyGXI/gong-neng-jie-shao/uitest-ui-ce-shi/uitestmanager')
+@menu('Brief/UITest/UITestManager')
+export class UITestManager extends Component {
 
     //#region instance
-    private static _instance: TestManager = null;
-    static get instance(): TestManager {
+    private static _instance: UITestManager = null;
+    static get instance(): UITestManager {
         if (null == this._instance) {
             let scene = director.getScene();
             if (!scene) return null;
-            this._instance = scene.getComponentInChildren(TestManager);
+            this._instance = scene.getComponentInChildren(UITestManager);
             if (!this._instance) {
                 let testNode = new Node("Test");
                 scene.addChild(testNode);
-                this._instance = testNode.addComponent(TestManager);
+                this._instance = testNode.addComponent(UITestManager);
             }
             director.addPersistRootNode(this._instance.node);
         }

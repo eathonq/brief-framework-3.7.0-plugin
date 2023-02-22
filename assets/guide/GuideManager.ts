@@ -5,30 +5,15 @@
  * update = 2023-01-30 16:14
  */
 
-import { _decorator, Node, Component, director, Prefab, instantiate } from "cc";
+import { _decorator, Node, Component, director, Prefab, instantiate, JsonAsset } from "cc";
 import { EDITOR } from "cc/env";
 import { config } from "../common/Configuration";
-import { CommandData, GuideCommand, GuideMaskBase } from "./GuideCommand";
+import { ResourcesUtil } from "../cocos/ResourcesUtil";
+import { GuideCommand, GuideMaskBase } from "./GuideCommand";
+import { GuideStep, GuideTask } from "./GuideTask";
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 const GUIDE_MANAGER_DEBUG = true;
-
-/** 引导步骤 */
-type GuideStep = {
-    /** 命令数据 */
-    command: CommandData;
-    /** 步骤名称 */
-    name?: string;
-}
-
-/** 引导任务 */
-export type GuideTask = {
-    /** 任务名称 */
-    name: string;
-    /** 任务步骤 */
-    steps: GuideStep[];
-}
-
 const LOCAL_GUIDE_KEY = "local_guide";
 
 /** 引导管理 */
@@ -59,14 +44,17 @@ export class GuideManager extends Component {
     @property(Prefab)
     private guideMask: Prefab = null;
 
+    @property({
+        type: [JsonAsset],
+        tooltip: "默认引导任务列表",
+    })
+    private defaultTasks: JsonAsset[] = [];
+
     protected onLoad() {
         this.initGuide();
 
         if (EDITOR) return;
-        if(GuideManager._preTask && GuideManager._preTask.length > 0){
-            this._tasks.push(...GuideManager._preTask);
-            GuideManager._preTask = [];
-        }
+        this.loadDefaultJsonTasks();
     }
 
     private _guideCommand: GuideCommand = null;
@@ -90,15 +78,6 @@ export class GuideManager extends Component {
         this._guideCommand = new GuideCommand(guideMask);
 
         this.loadLog();
-    }
-
-    private static  _preTask: GuideTask[] = [];
-    /**
-     * 预添加引导任务
-     * @param task 引导任务
-     */
-    static preAddTask(task: GuideTask) {
-        this._preTask.push(task);
     }
 
     private _tasks: GuideTask[] = [];
@@ -128,7 +107,7 @@ export class GuideManager extends Component {
      * @param taskName 任务名称
      * @param onStepCallback 引导步骤回调
      */
-    async startStep(taskName?:string, onStepCallback?: (step: GuideStep) => void) {
+    async startStep(taskName?: string, onStepCallback?: (step: GuideStep) => void) {
         if (this._tasks.length == 0) {
             console.warn("引导任务为空，请先添加引导任务！");
             return;
@@ -150,7 +129,7 @@ export class GuideManager extends Component {
             let step = task.steps[currentStepIndex];
             if (GUIDE_MANAGER_DEBUG) console.log("开始引导步骤: " + step.name ?? currentStepIndex);
             this.saveLog(taskName, currentStepIndex);
-            await this._guideCommand.doCommand(step.command);
+            await this._guideCommand.doStep(step);
             onStepCallback?.(step);
             currentStepIndex++;
         }
@@ -162,7 +141,7 @@ export class GuideManager extends Component {
      * 重置引导步骤
      * @param taskName 任务名称
      */
-    resetStep(taskName?:string) {
+    resetStep(taskName?: string) {
         if (this._tasks.length == 0) {
             console.warn("引导任务为空，请先添加引导任务！");
             return;
@@ -181,11 +160,39 @@ export class GuideManager extends Component {
         this.saveLog(taskName, 0);
     }
 
+    //#region Task Load
+    /** 加载默认引导 */
+    private loadDefaultJsonTasks() {
+        for (let i = 0; i < this.defaultTasks.length; i++) {
+            let data:any = this.defaultTasks[i].json;
+            if(data && data.name && data.steps){
+                this._tasks.push(data);
+            }
+        }
+    }
+
+    /** 已加载的引导任务 */
+    private _loadedJsonTasks: { [path: string]: boolean } = {};
+    /**
+     * 加载引导任务（自带重复加载检测）
+     * @param path json路径（不包含后缀，相对路径从resources子目录算起）
+     */
+    async loadJsonTask(path: string) {
+        if (this._loadedJsonTasks[path]) return;
+
+        let data = await ResourcesUtil.getJson(path);
+        if (data && data.name && data.steps) {
+            this._tasks.push(data);
+            this._loadedJsonTasks[path] = true;
+        }
+    }
+    //#endregion
+
     //#region Task Log
 
     /** 保存进度 */
-    private _taskLog: { [task:string]:number} = {};
-    private saveLog(taskName:string, stepIndex:number) {
+    private _taskLog: { [task: string]: number } = {};
+    private saveLog(taskName: string, stepIndex: number) {
         this._taskLog[taskName] = stepIndex;
         config.setItem(LOCAL_GUIDE_KEY, this._taskLog);
     }
