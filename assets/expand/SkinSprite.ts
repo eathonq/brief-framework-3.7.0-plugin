@@ -8,7 +8,7 @@
 import { _decorator, Component, Node } from 'cc';
 import { EDITOR } from 'cc/env';
 import { config } from '../common/Configuration';
-import { ResourcesUtil } from './ResourcesUtil';
+import { ResourcesUtil } from '../cocos/ResourcesUtil';
 const { ccclass, help, menu, property } = _decorator;
 
 const LOCAL_SKIN_KEY = 'local_skin'; // 本地皮肤 key
@@ -18,8 +18,8 @@ const SKIN_DATA_PATH = 'skin/skin'; // 皮肤数据路径
  * 皮肤精灵
  */
 @ccclass('SkinSprite')
-@help("https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/cocos/skinsprite")
-@menu('Brief/Cocos/SkinSprite')
+@help("https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/expand/skinsprite")
+@menu('Brief/Expand/SkinSprite')
 export class SkinSprite extends Component {
     @property
     private _key: string = "";
