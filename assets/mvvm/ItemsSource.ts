@@ -2,10 +2,10 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-02-15 18:45
+ * update = 2023-02-23 10:55
  */
 
-import { _decorator, Node, instantiate, NodePool, Enum, CCClass } from 'cc';
+import { _decorator, Node, instantiate, Enum, CCClass } from 'cc';
 import { EDITOR } from 'cc/env';
 import { Locator } from '../cocos/Locator';
 import { observe, reactive } from '../common/ReactiveObserve';
@@ -156,7 +156,6 @@ export class ItemsSource extends DataContext {
 
     private _content: Node = null;
     private _template: Node = null;
-    private _pool: NodePool = null;
     private initTemplate() {
         if (!this.template) {
             console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件 ItemsSource 没有设置模板节点`);
@@ -164,37 +163,22 @@ export class ItemsSource extends DataContext {
         }
         this._template = this.template;
         this._content = this._template.parent;
-        if (!this._pool) {
-            let path = Locator.getNodeFullPath(this._template);
-            this._pool = new NodePool(path);      
-        }
-        this._pool.put(this._template);
+        this._template.active = false;
+        this._template.removeFromParent();
     }
 
     private _nodeDataList: { node: Node, data: any }[] = [];
     private cleanItems() {
-        if (this._content) {
-            let children = this._content.children;
-            for (let i = children.length - 1; i >= 0; i--) {
-                let item = children[i];
-                this._pool.put(item);
-            }
-        }
-
-        if (this._nodeDataList && this._nodeDataList.length > 0) {
-            this._nodeDataList.forEach((item) => {
-                this._pool.put(item.node);
-            });
-        }
         this._nodeDataList = [];
+        if (this._content) {
+            this._content.removeAllChildren();
+        }
     }
 
     private addItem(index: number, data: any) {
         if (index < 0) return;
-        let node = this._pool.get();
-        if (!node) {
-            node = instantiate(this._template);
-        }
+        let node = instantiate(this._template);
+        node.active = true;
         this._content.insertChild(node, index);
         this._nodeDataList.push({ node, data });
 
@@ -214,7 +198,7 @@ export class ItemsSource extends DataContext {
         if (index < 0) return;
 
         let item = this._nodeDataList[index];
-        this._pool.put(item.node);
+        item.node.removeFromParent();
         this._nodeDataList.splice(index, 1);
     }
 

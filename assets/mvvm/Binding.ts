@@ -2,7 +2,7 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-02-19 18:59
+ * update = 2023-02-23 10:55
  */
 
 import { _decorator, Node, Component, Enum, Sprite, Button, CCClass, Label, ProgressBar } from 'cc';
@@ -281,22 +281,13 @@ export class Binding extends CCElement {
                 break;
         }
 
+        this.onUpdateData();
     }
 
     protected onDestroy() {
         if (EDITOR) return;
 
         this._parent?.unregister(this);
-    }
-
-    protected onEnable() {
-        if (EDITOR) return;
-
-        this.onUpdateData();
-    }
-
-    protected onDisable() {
-        if (EDITOR) return;
 
         if (this._isObservable && this._reaction) {
             unobserve(this._reaction);
