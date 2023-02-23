@@ -10,7 +10,7 @@ import { EDITOR } from 'cc/env';
 import { i18n, I18nMode } from './I18n';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
-/** 默认语言管理 */
+/** 默认语言设置 */
 @ccclass('brief.Language')
 @help('https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/i18n/language')
 @executeInEditMode

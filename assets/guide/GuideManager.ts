@@ -9,8 +9,7 @@ import { _decorator, Node, Component, director, Prefab, instantiate, JsonAsset }
 import { EDITOR } from "cc/env";
 import { config } from "../common/Configuration";
 import { ResourcesUtil } from "../cocos/ResourcesUtil";
-import { GuideCommand, GuideMaskBase } from "./GuideCommand";
-import { GuideStep, GuideTask } from "./GuideTask";
+import { GuideCommand, GuideMaskBase, GuideStep, GuideTask } from "./GuideCommand";
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 const GUIDE_MANAGER_DEBUG = true;
@@ -180,7 +179,7 @@ export class GuideManager extends Component {
     async loadJsonTask(path: string) {
         if (this._loadedJsonTasks[path]) return;
 
-        let data = await ResourcesUtil.getJson(path);
+        let data = await ResourcesUtil.getJson<GuideTask>(path);
         if (data && data.name && data.steps) {
             this._tasks.push(data);
             this._loadedJsonTasks[path] = true;

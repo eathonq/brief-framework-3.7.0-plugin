@@ -12,12 +12,19 @@ import { stringFormat } from "../common/StringFormat";
 import { ResourcesUtil } from "../cocos/ResourcesUtil";
 import { LocalizedLabel } from "./LocalizedLabel";
 import { LocalizedSprite } from "./LocalizedSprite";
-import { LanguageData } from "./LanguageData";
 
 const PARAMETER_MARK = '#';             // 参数开始标记
 const PARAMETER_SPLIT = '$';            // 参数分隔符
-const LOCAL_LANGUAGE_KEY = 'language';  // 本地语言 key
+const LOCAL_LANGUAGE_KEY = 'local_language';  // 本地语言 key
 const LANGUAGE_DATA_PATH = 'i18n';     // 语言数据路径
+
+/** 多语言数据 */
+export type LanguageData = {
+    /** 语言名称 */
+    name: string;
+    /** 语言数据 */
+    data: {};
+}
 
 /** i18n显示模式 */
 export enum I18nMode {
@@ -52,7 +59,7 @@ class I18n {
     set language(value: string) {
         this._language = value;
         if (this._language !== value) {
-            this.setLanguage(value);
+            this.setLanguage(this._language);
         }
     }
 
@@ -77,6 +84,7 @@ class I18n {
      */
     setLanguageWithModel(language: string, mode: I18nMode = I18nMode.DATA) {
         this._i18nMode = mode;
+        this._language = language;
         this.setLanguage(language, false);
     }
 
@@ -92,7 +100,6 @@ class I18n {
         this._currentLanguageData = this._languages[language];
         this.updateSceneRenderers();
     }
-
 
     private _currentLanguageData: any = null;
     private current(watchPath: string): string {
@@ -182,7 +189,7 @@ class I18n {
     }
 
     //#region 多语言json数据
-    private _languages: { [key: string]: LanguageData } = {};
+    private _languages: { [key: string]: {} } = {};
 
     /**
      * 加载多语言数据
@@ -202,7 +209,7 @@ class I18n {
     async loadJsonLanguageData(path: string) {
         if (this._loadedLanguages[path]) return;
 
-        let data = await ResourcesUtil.getJson(path);
+        let data = await ResourcesUtil.getJson<LanguageData>(path);
         if (data && data.name && data.data) {
             this._languages[data.name] = data.data;
             this._loadedLanguages[path] = true;

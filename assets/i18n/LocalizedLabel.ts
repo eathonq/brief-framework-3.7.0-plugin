@@ -100,6 +100,8 @@ export class LocalizedLabel extends Component {
 
     /** 设置组件值 */
     private setComponentValue(value: string) {
+        if(!value || value == "") return;
+
         switch (this.componentName) {
             case Label.name:
                 this.node.getComponent(Label)[this.componentProperty] = `${value}`;

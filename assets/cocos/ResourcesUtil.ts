@@ -28,7 +28,7 @@ export class ResourcesUtil {
      * @returns Promise<SpriteFrame>
      */
     static async getSpriteFrame(path: string, formate = "spriteFrame"): Promise<SpriteFrame> {
-        if (path.trim() === '') return null;
+        if (!path || path.trim() === '') return null;
 
         if (this._isBundle) {
             return BundleUtil.getSpriteFrame(this._bundleName, path, formate);
@@ -89,7 +89,7 @@ export class ResourcesUtil {
      * @returns Promise<AudioClip>
      */
     static async getAudioClip(path: string): Promise<AudioClip> {
-        if (path.trim() === '') return null;
+        if (!path || path.trim() === '') return null;
 
         if (this._isBundle) {
             return BundleUtil.getAudioClip(this._bundleName, path);
@@ -111,19 +111,19 @@ export class ResourcesUtil {
      * @param path json路径（不包含后缀，相对路径从resources子目录算起）
      * @returns Promise<any>
      */
-    static async getJson(path: string): Promise<any> {
-        if (path.trim() === '') return null;
+    static async getJson<T>(path: string): Promise<T> {
+        if (!path || path.trim() === '') return null;
 
         if (this._isBundle) {
             return BundleUtil.getJson(this._bundleName, path);
         }
 
-        return new Promise<any>((resolve, reject) => {
+        return new Promise<T>((resolve, reject) => {
             resources.load(path, (err: any, res: JsonAsset) => {
                 if (err) {
                     resolve(null);
                 } else {
-                    resolve(res.json);
+                    resolve(res.json as T);
                 }
             });
         });
