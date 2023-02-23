@@ -25,7 +25,7 @@ export type TooltipCommandData = {
     content: string;
     /** 提示窗名称（类型） */
     type?: string;
-    /** 提示窗显示超时 */
+    /** 提示窗显示超时（单位秒） */
     timeout?: number;
 }
 
@@ -74,11 +74,20 @@ export class GuideCommand {
 
     private _guideMask: GuideMaskBase = null;
 
-    async doStep(step: GuideStep) {
-        if(step.click){
+    private async getNode(path: string) {
+        const root = director.getScene();
+        const node = await Locator.locateNode(root, path);
+        if (!node) {
+            console.error(`node not found: ${path}`);
+        }
+        return node;
+    }
+
+    async runStep(step: GuideStep) {
+        if (step.click) {
             await this.doClick(step.click);
         }
-        else if(step.tooltip){
+        else if (step.tooltip) {
             // 默认数据设置
             // if(!step.tooltip.type){
             //     step.tooltip.type = "default";
@@ -87,28 +96,24 @@ export class GuideCommand {
         }
     }
 
-    private async doClick(command: ClickCommandData) {
-        return new Promise<void>(async (resolve, reject) => {
-            let root = director.getScene();
-            let node = await Locator.locateNode(root, command.path);
-            if (node) {
-                this._guideMask.focusNode(node);
-                node.once(Node.EventType.TOUCH_END, () => {
-                    this._guideMask.clearFocus();
-                    resolve();
-                });
-            }
-            else {
+    private async doClick(data: ClickCommandData) {
+        const node = await this.getNode(data.path);
+        if (!node) return;
+
+        return new Promise<void>((resolve) => {
+            this._guideMask.focusNode(node);
+            node.once(Node.EventType.TOUCH_END, () => {
+                this._guideMask.clearFocus();
                 resolve();
-            }
+            });
         });
     }
 
     private timer: any;
-    private async doTooltip(command: TooltipCommandData) {
-        return new Promise<void>(async (resolve, reject) => {
-            ViewManager.instance.showTooltip(command.type, {
-                content: command.content, resolve: () => {
+    private async doTooltip(data: TooltipCommandData) {
+        return new Promise<void>((resolve) => {
+            ViewManager.instance.showTooltip(data.type, {
+                content: data.content, resolve: () => {
                     if (this.timer) {
                         clearTimeout(this.timer);
                         this.timer = null;
@@ -116,12 +121,12 @@ export class GuideCommand {
                     resolve();
                 }
             });
-            if (command.timeout) {
+            if (data.timeout) {
                 clearTimeout(this.timer);
                 this.timer = setTimeout(() => {
-                    ViewManager.instance.closeTooltip(command.type);
+                    ViewManager.instance.closeTooltip(data.type);
                     this.timer = null;
-                }, command.timeout);
+                }, data.timeout * 1000);
             }
         });
     }

@@ -80,26 +80,6 @@ export class GuideManager extends Component {
     }
 
     private _tasks: GuideTask[] = [];
-    /**
-     * 添加引导任务
-     * @param task 引导任务 
-     */
-    addTask(task: GuideTask) {
-        this._tasks.push(task);
-    }
-
-    /**
-     * 移除引导任务
-     * @param taskName 任务名称 
-     */
-    removeTask(taskName: string) {
-        for (let i = 0; i < this._tasks.length; i++) {
-            if (this._tasks[i].name == taskName) {
-                this._tasks.splice(i, 1);
-                break;
-            }
-        }
-    }
 
     /**
      * 启动引导步骤
@@ -128,7 +108,7 @@ export class GuideManager extends Component {
             let step = task.steps[currentStepIndex];
             if (GUIDE_MANAGER_DEBUG) console.log("开始引导步骤: " + step.name ?? currentStepIndex);
             this.saveLog(taskName, currentStepIndex);
-            await this._guideCommand.doStep(step);
+            await this._guideCommand.runStep(step);
             onStepCallback?.(step);
             currentStepIndex++;
         }
