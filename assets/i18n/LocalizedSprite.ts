@@ -87,7 +87,14 @@ export class LocalizedSprite extends Component {
     protected onLoad() {
         this.checkEditorComponent();
         i18n.init();
-        this.resetValue();
+    }
+
+    private _language: string = "";
+    protected onEnable() {
+        if (this._language != i18n.language) {
+            this._language = i18n.language;
+            this.resetValue();
+        }
     }
 
     resetValue() {

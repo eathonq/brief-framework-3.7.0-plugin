@@ -5,7 +5,7 @@
  * update = 2023-02-22 18:40
  */
 
-import { _decorator, Component, Node } from 'cc';
+import { _decorator, Component, Node, director } from 'cc';
 import { EDITOR } from 'cc/env';
 import { config } from '../common/Configuration';
 import { ResourcesUtil } from '../cocos/ResourcesUtil';
@@ -34,23 +34,24 @@ export class SkinSprite extends Component {
     }
 
     protected onLoad(): void {
-        SkinManager.instance.bindSkin(this);
+        skin.init();
     }
 
-    protected onDestroy(): void {
-        SkinManager.instance.unbindSkin(this);
-    }
-
-    protected start(): void {
-        this.refreshSkin();
+    private _path: string = "";
+    protected onEnable(): void {
+        let path = SkinManager.instance.getSkinPath(this.key);
+        if (path != this._path) {
+            this.resetSkin();
+        }
     }
 
     /**
      * 刷新皮肤
      * @param path 皮肤路径
      */
-    refreshSkin() {
-        ResourcesUtil.setSprite(this.node, SkinManager.instance.getSkinPath(this.key));
+    resetSkin() {
+        this._path = SkinManager.instance.getSkinPath(this.key);
+        ResourcesUtil.setSprite(this.node, this._path);
     }
 }
 
@@ -67,6 +68,19 @@ class SkinManager {
 
     private _displayGroup: string = "";
     private _skinMap: Map<string, Map<string, string>> = new Map();
+
+    private _isInit: boolean = false;
+    /** 初始化 */
+    async init() {
+        if (this._isInit) return;
+        this._isInit = true;
+
+        if (EDITOR) return;
+
+        this.loadKeyGroupData();
+        await this.loadJsonSkinData(SKIN_DATA_PATH);
+        this.refresh();
+    }
 
     //#region 自定义皮肤分组
     /** 自定义皮肤分组 */
@@ -113,35 +127,27 @@ class SkinManager {
         return groupMap.get(key);
     }
 
-    private _bindSkinMap: Map<string, SkinSprite> = new Map();
-    /**
-     * 绑定皮肤
-     * @param sprite 皮肤精灵
-     */
-    bindSkin(sprite: SkinSprite) {
-        this._bindSkinMap.set(sprite.key, sprite);
-    }
-
-    /**
-     * 解绑皮肤
-     * @param sprite 皮肤精灵
-     */
-    unbindSkin(sprite: SkinSprite) {
-        this._bindSkinMap.delete(sprite.key);
-    }
-
     /**
      * 切换皮肤分组
      * @param group 皮肤分组
      */
     switchGroup(group: string) {
         this._displayGroup = group;
-        this._bindSkinMap.forEach((sprite) => {
-            sprite.refreshSkin();
-        });
+
+        const rootNodes = director.getScene()!.children;
+        const allSkinSprites: SkinSprite[] = [];
+        for (let i = 0; i < rootNodes.length; i++) {
+            const skinSprites = rootNodes[i].getComponentsInChildren(SkinSprite);
+            allSkinSprites.push(...skinSprites);
+        }
+        for (let i = 0; i < allSkinSprites.length; i++) {
+            let sprite = allSkinSprites[i];
+            if (!sprite.node.active) continue;
+            sprite.resetSkin();
+        }
     }
 
-    refresh() {
+    private refresh() {
         if (this._displayGroup == "") {
             this._displayGroup = this._skinMap.keys().next().value;
         }
@@ -167,17 +173,6 @@ class SkinManager {
 
             this._displayGroup = data.default;
         }
-    }
-
-
-    /**
-     * 加载皮肤数据
-     */
-    async init() {
-        if (EDITOR) return;
-
-        this.loadKeyGroupData();
-        await this.loadJsonSkinData(SKIN_DATA_PATH);
     }
 }
 

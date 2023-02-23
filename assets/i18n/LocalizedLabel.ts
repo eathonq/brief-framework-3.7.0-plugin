@@ -73,7 +73,7 @@ export class LocalizedLabel extends Component {
                 console.warn('LocalizedLabel 组件必须挂载在 Label,RichText,EditBox 上');
                 return;
             }
-    
+
         }
     }
     //#endregion
@@ -81,13 +81,20 @@ export class LocalizedLabel extends Component {
     protected onLoad() {
         this.checkEditorComponent();
         i18n.init();
-        this.resetValue();
+    }
+
+    private _language: string = "";
+    protected onEnable() {
+        if (this._language != i18n.language) {
+            this._language = i18n.language;
+            this.resetValue();
+        }
     }
 
     /**
-         * 重置地址
-         * @param path 地址 
-         */
+     * 重置地址
+     * @param path 地址 
+     */
     resetPath(path: string) {
         this._watchPath = path;
         this.resetValue();
@@ -100,7 +107,7 @@ export class LocalizedLabel extends Component {
 
     /** 设置组件值 */
     private setComponentValue(value: string) {
-        if(!value || value == "") return;
+        if (!value || value == "") return;
 
         switch (this.componentName) {
             case Label.name:

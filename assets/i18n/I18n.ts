@@ -63,17 +63,17 @@ class I18n {
         }
     }
 
-    private _init = false;
+    private _isInit: boolean = false;
     /** 初始化 */
     init() {
-        if (this._init) return;
-        this._init = true;
+        if (this._isInit) return;
+        this._isInit = true;
 
-        if (!EDITOR) {
-            let localLanguage = config.getItem(LOCAL_LANGUAGE_KEY);
-            if (localLanguage) {
-                this.setLanguage(localLanguage, false);
-            }
+        if (EDITOR) return;
+
+        let localLanguage = config.getItem(LOCAL_LANGUAGE_KEY);
+        if (localLanguage) {
+            this.setLanguage(localLanguage, false);
         }
     }
 
@@ -164,10 +164,10 @@ class I18n {
     private updateSceneRenderers() {
         const rootNodes = director.getScene()!.children;
         // walk all nodes with localize label and update
-        const allLocalizedLabels: any[] = [];
+        const allLocalizedLabels: LocalizedLabel[] = [];
         for (let i = 0; i < rootNodes.length; ++i) {
             let labels = rootNodes[i].getComponentsInChildren(LocalizedLabel);
-            Array.prototype.push.apply(allLocalizedLabels, labels);
+            allLocalizedLabels.push(...labels);
         }
         for (let i = 0; i < allLocalizedLabels.length; ++i) {
             let label = allLocalizedLabels[i];
@@ -176,10 +176,10 @@ class I18n {
         }
 
         // walk all nodes with localize sprite and update
-        const allLocalizedSprites: any[] = [];
+        const allLocalizedSprites: LocalizedSprite[] = [];
         for (let i = 0; i < rootNodes.length; ++i) {
             let sprites = rootNodes[i].getComponentsInChildren(LocalizedSprite);
-            Array.prototype.push.apply(allLocalizedSprites, sprites);
+            allLocalizedSprites.push(...sprites);
         }
         for (let i = 0; i < allLocalizedSprites.length; ++i) {
             let sprite = allLocalizedSprites[i];
