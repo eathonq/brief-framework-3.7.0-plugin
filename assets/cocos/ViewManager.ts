@@ -134,58 +134,77 @@ class ViewStack {
     }
 
     /**
-     * 添加到栈顶
+     * 添加到栈顶（最后一个视图）
      * @param viewData 视图信息
      * @param data 数据
      */
     push(viewData: ViewData, data?: any): void {
         if (!viewData) return;
 
-        // 关闭当前视图
+        // 关闭当前最后一个视图
         if (this.viewList.length > 0) {
             let current = this.viewList[this.viewList.length - 1];
             current.hide();
         }
 
-        // 添加到栈顶并显示
-        viewData.show(data);
+        //添加到当前最后一个视图，并显示
         this.viewList.push(viewData);
+        viewData.show(data);
     }
 
     /**
-     * 弹出栈顶
-     * @param name 视图名称
+     * 添加到栈顶（最后一个视图），并替换当前最后一个视图
+     * @param viewData 视图信息
      * @param data 数据
      */
-    pop(name?: string, data?: any) {
-        // 后退当前一个视图
-        if (!name) {
-            if (this.viewList.length >= 2) {
-                let showView = this.viewList[this.viewList.length - 2];
-                showView.show();
-            }
+    pushWithReplace(viewData: ViewData, data?: any): void {
+        if (!viewData) return;
 
-            // 最后一个视图不需要关闭
-            if (this.viewList.length > 1) {
-                let closeView = this.viewList.pop();
-                closeView.close(data);
-            }
+        // 关闭当前最后一个视图
+        if (this.viewList.length > 0) {
+            let current = this.viewList.pop();
+            current.close();
         }
-        // 视图以及后面的所有视图都退出
-        else {
-            let index = this.viewList.findIndex(v => v.viewName === name);
-            if (index >= 0) {
-                if (index - 1 >= 0) {
-                    let showView = this.viewList[index - 1];
-                    showView.show();
-                }
 
-                // 最后一个视图不需要关闭
-                while (this.viewList.length > index && this.viewList.length > 1) {
-                    let closeView = this.viewList.pop();
-                    closeView.close(data);
-                }
-            }
+        //添加到当前最后一个视图，并显示
+        this.viewList.push(viewData);
+        viewData.show(data);
+    }
+
+    /**
+     * 添加到栈顶（最后一个视图），并清空当前所有视图栈
+     * @param viewData 视图信息
+     * @param data 数据
+     */
+    pushWithRoot(viewData: ViewData, data?: any): void {
+        if (!viewData) return;
+
+        // 关闭当前所有所有视图
+        while (this.viewList.length > 0) {
+            let current = this.viewList.pop();
+            current.close();
+        }
+
+        //添加到当前最后一个视图，并显示
+        this.viewList.push(viewData);
+        viewData.show(data);
+    }
+
+    /**
+     * 弹出栈顶（最后一个视图）
+     * @param data 数据
+     */
+    pop(data?: any) {
+        // 关闭当前最后一个视图
+        if (this.viewList.length > 0) {
+            let current = this.viewList.pop();
+            current.close(data);
+        }
+
+        // 显示当前最后一个视图
+        if (this.viewList.length > 0) {
+            let showView = this.viewList[this.viewList.length - 1];
+            showView.show();
         }
     }
 
@@ -198,21 +217,22 @@ class ViewStack {
         if (!name) return false;
 
         let index = this.viewList.findIndex(v => v.viewName === name);
-        if (index >= 0) {
-
-            // 已经是最上层视图，不需要再操作
+        if (index != -1) {
+            // 已经是当前视图，不需要再操作
             if (index == this.viewList.length - 1) return true;
 
-            // 只剩一个视图，不需要关闭
-            if (this.viewList.length == 1) return true;
-
-            let showView = this.viewList[index];
-            showView.show(data);
-
+            // 关闭前面所有的视图
             while (this.viewList.length > index + 1) {
                 let closeView = this.viewList.pop();
                 closeView.close();
             }
+
+            // 显示当前最后一个视图
+            if (this.viewList.length > 0) {
+                let showView = this.viewList[this.viewList.length - 1];
+                showView.show(data);
+            }
+
             return true;
         }
 
@@ -224,15 +244,30 @@ class ViewStack {
      * @param name 视图名称
      */
     remove(name: string, data?: any) {
-        if (this.viewList.length == 1) return;
-
         let index = this.viewList.findIndex(v => v.viewName === name);
-        if (index >= 0) {
-            if (index == this.viewList.length - 1) return this.pop(undefined, data);
+        if (index != -1) {
+            // 最后一个视图，弹出
+            if (index == this.viewList.length - 1) return this.pop(data);
 
-            let closeViews = this.viewList.splice(index, 1);
-            closeViews[0].close(data);
+            // 不是最后一个视图，直接关闭
+            let closeView = this.viewList.splice(index, 1);
+            closeView[0].close(data);
         }
+    }
+
+    /**
+     * 取出某个视图（不做任何操作，显示，关闭，隐藏等）
+     * @param name 视图名称
+     * @returns 视图信息
+     */
+    takeOut(name: string) {
+        let index = this.viewList.findIndex(v => v.viewName === name);
+        let isLast = index == this.viewList.length - 1;
+        if (index != -1) {
+            // 不是最后一个视图，直接关闭
+            return this.viewList.splice(index, 1)[0];
+        }
+        return null;
     }
 }
 
@@ -322,7 +357,7 @@ export class ViewManager extends Component {
 
     // onRestore() {}
 
-    private init(){
+    private init() {
         MessageBox.handle = ViewManager.instance;
         Tooltip.handle = ViewManager.instance;
     }
@@ -554,15 +589,16 @@ export class ViewManager extends Component {
     }
 
     /**
-     * 显示视图
+     * 显示视图（该视图已经存在则关闭之前所有视图显示该视图）
      * @param name 视图名称(不填显示默认视图) 
      * @param data 数据
      */
     showView(name?: string, data?: any): void {
+        if (!name) name = this.getDefaultName(ViewType.View);
+        if (!name) return;
+
         // 使用延迟，防止在onLoad中调用
         this.scheduleOnce(() => {
-            if (!name) name = this.getDefaultName(ViewType.View);
-            if (!name) return;
             if (this.viewStack.popTo(name, data)) {
                 return;
             }
@@ -576,12 +612,51 @@ export class ViewManager extends Component {
     }
 
     /**
-     * 视图后退（返回）
-     * @param name 视图名称(不填显示默认视图)
+     * 显示视图并替换当前视图（该视图已经存在则取出该视图显示替换）
+     * @param name 视图名称
      * @param data 数据
      */
-    backView(name?: string, data?: any): void {
-        this.viewStack.pop(name, data);
+    showWithReplace(name: string, data?: any): void {
+        if (!name) return;
+
+        // 使用延迟，防止在onLoad中调用
+        this.scheduleOnce(() => {
+            let viewData = this.viewStack.takeOut(name);
+            if (!viewData) {
+                viewData = this.createViewData(name);
+                if (!viewData) return;
+            }
+            this.viewStack.pushWithReplace(viewData, data);
+            this.updateContentSiblingIndex();
+        }, 0);
+    }
+
+    /**
+     * 显示视图做为根视图（该视图已经存在则取出该视图做为根视图）
+     * @param name 视图名称
+     * @param data 数据
+     */
+    showWithRoot(name: string, data?: any): void {
+        if (!name) return;
+
+        // 使用延迟，防止在onLoad中调用
+        this.scheduleOnce(() => {
+            let viewData = this.viewStack.takeOut(name);
+            if (!viewData) {
+                viewData = this.createViewData(name);
+                if (!viewData) return;
+            }
+            this.viewStack.pushWithRoot(viewData, data);
+            this.updateContentSiblingIndex();
+        }, 0);
+    }
+
+    /**
+     * 视图后退（返回）
+     * @param data 数据
+     */
+    backView(data?: any): void {
+        this.viewStack.pop(data);
     }
 
     /**
