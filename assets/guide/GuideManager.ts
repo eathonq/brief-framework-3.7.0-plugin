@@ -29,7 +29,7 @@ export class GuideManager extends Component {
             if (!scene) return null;
             this._instance = scene.getComponentInChildren(GuideManager);
             if (!this._instance) {
-                console.log("GuideManager is not found in scene");
+                console.log("GuideManager not found, create new one");
                 let newNode = new Node("GuideManager");
                 scene.addChild(newNode);
                 this._instance = newNode.addComponent(GuideManager);

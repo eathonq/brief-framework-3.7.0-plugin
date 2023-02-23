@@ -46,7 +46,7 @@ export class AudioManager extends Component {
             if (!scene) return null;
             this._instance = scene.getComponentInChildren(AudioManager);
             if (!this._instance) {
-                console.log("AudioManager is not found in scene");
+                console.log("AudioManager not found, create new one");
                 let newNode = new Node("AudioManager");
                 scene.addChild(newNode);
                 this._instance = newNode.addComponent(AudioManager);

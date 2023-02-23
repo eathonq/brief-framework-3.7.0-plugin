@@ -250,7 +250,7 @@ export class ViewManager extends Component {
             if (!scene) return null;
             this._instance = scene.getComponentInChildren(ViewManager);
             if (!this._instance) {
-                console.log("ViewManager is not found in scene");
+                console.log("ViewManager not found, create new one.");
                 let newNode = new Node("ViewManager");
                 scene.addChild(newNode);
                 this._instance = newNode.addComponent(ViewManager);

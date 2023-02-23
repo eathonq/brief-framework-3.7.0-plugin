@@ -44,7 +44,8 @@ export class UITestManager extends Component {
             if (!scene) return null;
             this._instance = scene.getComponentInChildren(UITestManager);
             if (!this._instance) {
-                let testNode = new Node("Test");
+                console.log("UITestManager not found, create new one");
+                let testNode = new Node("UITestManager");
                 scene.addChild(testNode);
                 this._instance = testNode.addComponent(UITestManager);
             }
