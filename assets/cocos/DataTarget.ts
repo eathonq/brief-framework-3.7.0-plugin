@@ -2,7 +2,7 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-01-30 16:14
+ * update = 2023-02-24 11:25
  */
 
 /** 
@@ -30,7 +30,7 @@ type BindData = {
 /** 
  * 游戏数据
  */
-class GameData {
+export class DataTarget {
     // 索引签名，可以使用额外的属性
     [key: string]: any;
 
@@ -104,20 +104,3 @@ class GameData {
         delete this[key];
     }
 }
-
-/** 
- * 游戏数据
- * @example
- * gameData.on("add", (a, b) => {
- *     return a + b;
- * });
- * let data = gameData.add(1, 2);  // 3
- * gameData.off("add");
- * 
- * let object = { a: 0 };
- * gameData.on("a", { target: object, attr: "a" });
- * gameData.a = 100; // a = 100
- * let data = gameData.a; // data = 100
- * gameData.off("a");
- */
-export const gameData = new GameData();

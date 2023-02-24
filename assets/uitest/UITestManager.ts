@@ -18,27 +18,32 @@ const TEST_MANAGER_DEBUG = true;
 @help('https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/uitest/uitestmanager')
 @menu('Brief/UITest/UITestManager')
 export class UITestManager extends Component {
-    //#region instance
-    private static _instance: UITestManager = null;
-    static get instance(): UITestManager {
-        if (null == this._instance) {
-            let scene = director.getScene();
-            if (!scene) return null;
-            this._instance = scene.getComponentInChildren(UITestManager);
-            if (!this._instance) {
-                console.log("UITestManager not found, create new one");
-                let testNode = new Node("UITestManager");
-                scene.addChild(testNode);
-                this._instance = testNode.addComponent(UITestManager);
-            }
-            director.addPersistRootNode(this._instance.node);
-        }
-        return this._instance;
-    }
-    //#endregion
+    // //#region instance
+    // private static _instance: UITestManager = null;
+    // static get instance(): UITestManager {
+    //     if (null == this._instance) {
+    //         let scene = director.getScene();
+    //         if (!scene) return null;
+    //         this._instance = scene.getComponentInChildren(UITestManager);
+    //         if (!this._instance) {
+    //             console.log("UITestManager not found, create new one");
+    //             let testNode = new Node("UITestManager");
+    //             scene.addChild(testNode);
+    //             this._instance = testNode.addComponent(UITestManager);
+    //         }
+    //         director.addPersistRootNode(this._instance.node);
+    //     }
+    //     return this._instance;
+    // }
+    // //#endregion
 
-    @property(JsonAsset)
-    private test: JsonAsset = null;
+    // @property(JsonAsset)
+    // private test: JsonAsset = null;
+
+    @property({
+        tooltip: "测试任务json路径（不包含后缀，相对路径从resources子目录算起）",
+    })
+    private test: string = "";
 
     @property({
         tooltip: "是否在加载时自动执行测试任务",
@@ -49,10 +54,15 @@ export class UITestManager extends Component {
         if (EDITOR) return;
 
         if (this.test && this.startOnLoad) {
-            let data = this.test.json as TestTask;
-            if (data && data.name && data.steps) {
-                this.startTest(data);
-            }
+            // let data = this.test.json as TestTask;
+            // if (data && data.name && data.steps) {
+            //     this.startTest(data);
+            // }
+            this.loadJsonTask(this.test).then((data) => {
+                if (data) {
+                    this.startTest(data);
+                }
+            });
         }
     }
 

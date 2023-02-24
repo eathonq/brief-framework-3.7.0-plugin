@@ -5,22 +5,18 @@
  * update = 2023-01-30 16:14
  */
 
+import { ViewManager } from "./ViewManager";
+
 /** 提示框数据 */
 export type TooltipData = {
     /** 内容 */
     content: string;
-     /** 异步回调 */
-     resolve?: () => void;
+    /** 异步回调 */
+    resolve?: () => void;
 }
-
-type TooltipHandle = {
-    showTooltip: (name?: string, data?: any) => void;
-    closeTooltip: (name?: string, data?: any) => void;
-};
 
 /** 提示框 */
 export class Tooltip {
-    static handle: TooltipHandle = null;
     private static timer: any = null;
 
     /**
@@ -30,17 +26,19 @@ export class Tooltip {
      * @param tooltip 指定提示框类型名称
      */
     static show(content: string, timeouts?: number, tooltip?: string) {
-        let data: TooltipData = { content, resolve: ()=>{
-            if (timeouts) {
-                clearTimeout(Tooltip.timer);
-                Tooltip.timer = null;
+        let data: TooltipData = {
+            content, resolve: () => {
+                if (timeouts) {
+                    clearTimeout(Tooltip.timer);
+                    Tooltip.timer = null;
+                }
             }
-        } };
-        this.handle?.showTooltip(tooltip, data);
+        };
+        ViewManager.instance.showTooltip(tooltip, data);
         if (timeouts) {
             clearTimeout(Tooltip.timer);
             Tooltip.timer = setTimeout(() => {
-                this.handle?.closeTooltip(tooltip);
+                ViewManager.instance.closeTooltip(tooltip);
                 Tooltip.timer = null;
             }, timeouts * 1000);
         }
@@ -52,7 +50,7 @@ export class Tooltip {
      * @param data 提示框数据
      */
     static tip(name: string, data?: any) {
-        this.handle?.showTooltip(name, data);
+        ViewManager.instance.showTooltip(name, data);
     }
 
     /**
@@ -60,6 +58,6 @@ export class Tooltip {
      * @param name 提示框类型名称
      */
     static close(name: string) {
-        this.handle?.closeTooltip(name);
+        ViewManager.instance.closeTooltip(name);
     }
 }

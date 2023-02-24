@@ -7,7 +7,8 @@
 
 import { _decorator, Node, AudioClip, AudioSource, Component, director } from "cc";
 import { EDITOR } from "cc/env";
-import { config } from "../common/Configuration";
+import { brief } from "../Brief";
+import { Configuration } from "../common/Configuration";
 import { ResourcesUtil } from "./ResourcesUtil";
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
@@ -32,7 +33,7 @@ class SoundAudioSource {
     clip: AudioClip;
 }
 
-/** 音频管理器 */
+/** 音频管理 */
 @ccclass('brief.AudioManager')
 @help('https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/cocos/audiomanager')
 @executeInEditMode
@@ -91,6 +92,8 @@ export class AudioManager extends Component {
 
     protected onLoad(): void {
         if (EDITOR) return;
+
+        brief.audio = this;
 
         this._soundAudioSourceMap = new Map<string, SoundAudioSource>();
         this._audioClipDict = {};
@@ -427,7 +430,7 @@ export class AudioManager extends Component {
 
     private loadAudioConfig(): AudioConfig {
         let audio: AudioConfig;
-        let localAudio = config.getItem(AUDIO_CONFIG);
+        let localAudio = Configuration.instance.getItem(AUDIO_CONFIG);
         if (localAudio == null || localAudio == undefined || localAudio == "") {
             audio = { switchSound: true, switchMusic: true, volumeSound: 1, volumeMusic: 1 };
         }
@@ -439,6 +442,6 @@ export class AudioManager extends Component {
 
     private saveAudioConfig() {
         let audio: AudioConfig = { switchSound: this._switchSound, switchMusic: this._switchMusic, volumeSound: this._volumeSound, volumeMusic: this._volumeMusic };
-        config.setItem(AUDIO_CONFIG, JSON.stringify(audio));
+        Configuration.instance.setItem(AUDIO_CONFIG, JSON.stringify(audio));
     }
 }

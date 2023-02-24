@@ -7,9 +7,10 @@
 
 import { _decorator, Node, Component, director, Prefab, instantiate, JsonAsset } from "cc";
 import { EDITOR } from "cc/env";
-import { config } from "../common/Configuration";
+import { Configuration } from "../common/Configuration";
 import { ResourcesUtil } from "../cocos/ResourcesUtil";
 import { GuideCommand, GuideMaskBase, GuideStep, GuideTask } from "./GuideCommand";
+import { brief } from "../Brief";
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 const GUIDE_MANAGER_DEBUG = true;
@@ -53,6 +54,9 @@ export class GuideManager extends Component {
         this.initGuide();
 
         if (EDITOR) return;
+
+        brief.guide = this;
+
         this.loadDefaultJsonTasks();
     }
 
@@ -173,13 +177,13 @@ export class GuideManager extends Component {
     private _taskLog: { [task: string]: number } = {};
     private saveLog(taskName: string, stepIndex: number) {
         this._taskLog[taskName] = stepIndex;
-        config.setItem(LOCAL_GUIDE_KEY, this._taskLog);
+        Configuration.instance.setItem(LOCAL_GUIDE_KEY, this._taskLog);
     }
 
     /** 读取进度 */
     private loadLog() {
-        // config.removeItem(LOCAL_GUIDE_KEY); // 清除本地存储
-        this._taskLog = config.getItem(LOCAL_GUIDE_KEY, {});
+        // Configuration.instance.removeItem(LOCAL_GUIDE_KEY); // 清除本地存储
+        this._taskLog = Configuration.instance.getItem(LOCAL_GUIDE_KEY, {});
     }
     //#endregion
 }

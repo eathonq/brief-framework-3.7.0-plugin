@@ -6,7 +6,7 @@
  */
 
 /** 字符串格式化 */
-class StringFormat {
+export class StringUtil {
     /**
      * 是否为空或空字符串
      * @param str 
@@ -280,9 +280,9 @@ class StringFormat {
                             tf = "HH:mm:ss.fff";
                             break;
                     }
-                    return stringFormat.parseTime(String(params[i]), tf);
+                    return StringUtil.parseTime(String(params[i]), tf);
                 }
-                case 'k': return stringFormat.kmbt(params[i], p2 ? parseInt(p2.substr(1)) : 0);
+                case 'k': return StringUtil.kmbt(params[i], p2 ? parseInt(p2.substr(1)) : 0);
             }
             val = typeof (val) == 'object' ? JSON.stringify(val) : val.toString(base);
             let sz = parseInt(p1); /* padding size */
@@ -293,10 +293,9 @@ class StringFormat {
         let regex = /%(-)?(0?[0-9]+)?([.][0-9]+)?([#][0-9]+)?([%scfpxoditk])/g;
         return str.replace(regex, callback);
     }
+
     //#endregion
 }
 
 /** 字符串格式化 */
-export let stringFormat = StringFormat;
-/** 字符串格式化 */
-export let format = stringFormat.format;
+export let format = StringUtil.format;

@@ -177,13 +177,13 @@ export class Binding extends CCElement {
 
         // 设置绑定模式枚举默认值
         if (this._bindingMode != -1) {
-            let findIndex = this._modeEnums.findIndex((item) => {
-                return item.mode == this._bindingMode;
-            });
+            let findIndex = this._modeEnums.findIndex((item) => { return item.mode == this._bindingMode; });
             if (findIndex != -1) {
                 this.mode = findIndex;
+                return;
             }
         }
+        this.mode = 0;
     }
 
     /** 更新绑定数据枚举 */
@@ -191,7 +191,7 @@ export class Binding extends CCElement {
         // 获取绑定属性
         const newEnums = [];
         let isFunc = this._elementName === Button.name;
-        if(isFunc){
+        if (isFunc) {
             let dataList = decoratorData.getFunctionList(this._parent.bindingType);
             if (dataList) {
                 let count = 0;
@@ -200,7 +200,7 @@ export class Binding extends CCElement {
                 });
             }
         }
-        else{
+        else {
             let dataList = decoratorData.getPropertyList(this._parent.bindingType);
             if (dataList) {
                 let count = 0;
@@ -223,20 +223,21 @@ export class Binding extends CCElement {
 
         // 设置绑定数据枚举默认值
         if (this._bindingName !== '') {
-            let findIndex = this._bindingEnums.findIndex((item) => {
-                return item.name === this._bindingName;
-            });
+            let findIndex = this._bindingEnums.findIndex((item) => { return item.name === this._bindingName; });
             if (findIndex != -1) {
                 this.binding = findIndex;
+                return;
             }
             else {
                 console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件Binding绑定 ${this._bindingName} 已经不存在`);
                 // 如果只有一个枚举，就设置为默认值
                 if (this._bindingEnums.length == 1) {
                     this.binding = 0;
+                    return;
                 }
             }
         }
+        this.binding = 0;
     }
 
     protected selectedBinding() {
@@ -317,7 +318,7 @@ export class Binding extends CCElement {
         this._upperData = this._parent.getDataContextInRegister(this);
         if (!this._upperData) return;
 
-        if(this._reaction) {
+        if (this._reaction) {
             unobserve(this._reaction);
             this._reaction = null;
         }
@@ -348,11 +349,11 @@ export class Binding extends CCElement {
     }
 
     private onElementValueChange(value: any) {
-        if(this._upperData && Reflect.has(this._upperData, this._bindingName)){
-            if(this._upperData[this._bindingName] instanceof Function){
+        if (this._upperData && Reflect.has(this._upperData, this._bindingName)) {
+            if (this._upperData[this._bindingName] instanceof Function) {
                 this._upperData[this._bindingName](value);
             }
-            else{
+            else {
                 Reflect.set(this._upperData, this._bindingName, value);
             }
         }

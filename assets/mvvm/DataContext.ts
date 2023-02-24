@@ -165,15 +165,18 @@ export class DataContext extends Component {
             let findIndex = this._bindingEnums.findIndex((item) => { return item.name === this._bindingName; });
             if (findIndex != -1) {
                 this.binding = findIndex;
+                return
             }
             else {
                 console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件 DataContext 绑定 ${this._bindingName} 已经不存在`);
                 // 如果只有一个枚举，就设置为默认值
                 if (this._bindingEnums.length == 1) {
                     this.binding = 0;
+                    return;
                 }
             }
         }
+        this.binding = 0;
     }
 
     protected selectedBinding() {

@@ -6,6 +6,8 @@
  */
 
 import { _decorator, Node, Component, director, Camera, view, Size, Vec3, v3, tween } from "cc";
+import { EDITOR } from "cc/env";
+import { brief } from "../Brief";
 const { ccclass, help, menu, property } = _decorator;
 
 /** 摄像机跟随组件（如果手动挂载，需要挂载在Camera上面） */
@@ -29,6 +31,12 @@ export class CameraFollow extends Component {
         return this._instance;
     }
     //#endregion
+
+    protected onLoad(): void {
+        if(EDITOR) return;
+
+        brief.cameraFollow = this;
+    }
 
     protected update(deltaTime: number) {
         if (!this._target || this._isReset) return;

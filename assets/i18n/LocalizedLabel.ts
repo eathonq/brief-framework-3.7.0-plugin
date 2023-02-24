@@ -7,7 +7,7 @@
 
 import { _decorator, Component, Label, RichText, EditBox } from 'cc';
 import { EDITOR } from 'cc/env';
-import { i18n } from './I18n';
+import { I18n } from './I18n';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /** 组件检测数组 */
@@ -80,13 +80,13 @@ export class LocalizedLabel extends Component {
 
     protected onLoad() {
         this.checkEditorComponent();
-        i18n.init();
+        I18n.instance.init();
     }
 
     private _language: string = "";
     protected onEnable() {
-        if (this._language != i18n.language) {
-            this._language = i18n.language;
+        if (this._language != I18n.instance.language) {
+            this._language = I18n.instance.language;
             this.resetValue();
         }
     }
@@ -102,7 +102,7 @@ export class LocalizedLabel extends Component {
 
     /** 通过watchPath初始化值 */
     resetValue() {
-        this.setComponentValue(i18n.t(this._watchPath));
+        this.setComponentValue(I18n.instance.t(this._watchPath));
     }
 
     /** 设置组件值 */

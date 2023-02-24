@@ -175,9 +175,7 @@ export class CCElement extends Component {
 
         // 设置绑定数据枚举默认值
         if (this._elementName !== '') {
-            let findIndex = this._elementEnums.findIndex((item) => {
-                return item.name === this._elementName;
-            });
+            let findIndex = this._elementEnums.findIndex((item) => { return item.name === this._elementName; });
             if (findIndex != -1) {
                 this.bindingElement = findIndex;
                 return;
@@ -214,9 +212,7 @@ export class CCElement extends Component {
 
         // 设置绑定数据枚举默认值
         if (this._propertyName !== '') {
-            let findIndex = this._propertyEnums.findIndex((item) => {
-                return item.name === this._propertyName;
-            });
+            let findIndex = this._propertyEnums.findIndex((item) => { return item.name === this._propertyName; });
             if (findIndex != -1) {
                 this.bindingProperty = findIndex;
                 return;

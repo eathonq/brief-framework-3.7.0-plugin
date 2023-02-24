@@ -62,7 +62,7 @@ export let openLocalFile = (callback: (file: File) => void) => {
 // 参考
 // https://blog.csdn.net/grimraider/article/details/106378809
 
-class HttpHelper {
+export class HttpUtil {
 
     static isNative = false;
 
@@ -240,9 +240,6 @@ class HttpHelper {
         });
     }
 }
-
-/** http 工具 */
-export let http = HttpHelper;
 
 /**
  * websocket item

@@ -7,7 +7,7 @@
 
 import { _decorator, Component, Node, Enum, JsonAsset, CCClass } from 'cc';
 import { EDITOR } from 'cc/env';
-import { i18n, I18nMode } from './I18n';
+import { I18n, I18nMode } from './I18n';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /** 默认语言设置 */
@@ -81,7 +81,7 @@ export class Language extends Component {
         let newLanguages = [];
         for (let i = 0; i < this._languages.length; i++) {
             let language = this._languages[i];
-            i18n.loadLanguageData(language.json);
+            I18n.instance.loadLanguageData(language.json);
             newLanguages.push(language.json["name"]);
         }
         this.updateLanguageEnums(newLanguages);
@@ -110,11 +110,11 @@ export class Language extends Component {
     }
 
     private selectedLanguage() {
-        i18n.setLanguageWithModel(this._defaultLanguage, this.model);
+        I18n.instance.setLanguageWithModel(this._defaultLanguage, this.model);
     }
 
     private selectedModel() {
-        i18n.setLanguageWithModel(this._defaultLanguage, this._model);
+        I18n.instance.setLanguageWithModel(this._defaultLanguage, this._model);
     }
     //#endregion
     protected onLoad() {
@@ -126,15 +126,15 @@ export class Language extends Component {
         // 设置默认语言
         for (let i = 0; i < this._languages.length; i++) {
             let language = this._languages[i];
-            i18n.loadLanguageData(language.json);
+            I18n.instance.loadLanguageData(language.json);
         }
 
-        i18n.init();
-        if(i18n.language == ""){
-            i18n.language = this._defaultLanguage;
+        I18n.instance.init();
+        if(I18n.instance.language == ""){
+            I18n.instance.language = this._defaultLanguage;
         }
 
         // 设置默认显示
-        i18n.setLanguageWithModel(i18n.language);
+        I18n.instance.setLanguageWithModel(I18n.instance.language);
     }
 }

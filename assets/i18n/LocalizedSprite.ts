@@ -7,7 +7,7 @@
 
 import { _decorator, Component, Node, Sprite } from 'cc';
 import { EDITOR } from 'cc/env';
-import { i18n } from './I18n';
+import { I18n } from './I18n';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /**
@@ -86,13 +86,13 @@ export class LocalizedSprite extends Component {
 
     protected onLoad() {
         this.checkEditorComponent();
-        i18n.init();
+        I18n.instance.init();
     }
 
     private _language: string = "";
     protected onEnable() {
-        if (this._language != i18n.language) {
-            this._language = i18n.language;
+        if (this._language != I18n.instance.language) {
+            this._language = I18n.instance.language;
             this.resetValue();
         }
     }
@@ -103,7 +103,7 @@ export class LocalizedSprite extends Component {
 
         // 使用路径加载图片
         if (this.isWatchPath) {
-            i18n.s(this._watchPath).then(spriteFrame => {
+            I18n.instance.s(this._watchPath).then(spriteFrame => {
                 if (spriteFrame) {
                     sprite.spriteFrame = spriteFrame;
                 }
@@ -112,7 +112,7 @@ export class LocalizedSprite extends Component {
         // 使用其它方式加载图片
         else {
             if (this.languageSpriteHandler) {
-                this.languageSpriteHandler(sprite, i18n.language);
+                this.languageSpriteHandler(sprite, I18n.instance.language);
             }
         }
     }

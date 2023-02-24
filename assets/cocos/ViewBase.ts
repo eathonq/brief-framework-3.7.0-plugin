@@ -5,7 +5,7 @@
  * update = 2023-02-12 09:04
  */
 
-import { _decorator, Component, Enum, EventTouch, Label } from "cc";
+import { _decorator, Component, Node, Enum, EventTouch, Label } from "cc";
 import { EDITOR } from "cc/env";
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 

@@ -94,8 +94,19 @@ export function storageInit(storage: IStorage, level:number = 0) {
     }
 }
 
-/** 本地配置管理 */
-class Configuration implements IStorage {
+/**
+ * 本地配置
+ * @example
+ * Configuration.instance.setItem("str", "str");
+ * Configuration.instance.setItem("num", 0);
+ * Configuration.instance.setItem("bool", false);
+ * Configuration.instance.setItem("object", { a: 1, b: 2 });
+ * Configuration.instance.setItem("array", [ "a", "b" ]);
+ * Configuration.instance.setItem("Array", new Array<string>());
+ * // Configuration.instance.setItem("m", new Map<string, string>()); // 不支持
+ * Configuration.instance.setItem("o", mapToObj(new Map<string, string>())); // 转换成object
+ */
+export class Configuration implements IStorage {
     //#region instance
     private static _instance: Configuration = null;
     static get instance(): Configuration {
@@ -204,20 +215,6 @@ class Configuration implements IStorage {
 
 }
 
-/** 
- * 本地存储
- * @example
- * config.setItem("str", "str");
- * config.setItem("num", 0);
- * config.setItem("bool", false);
- * config.setItem("object", { a: 1, b: 2 });
- * config.setItem("array", [ "a", "b" ]);
- * config.setItem("Array", new Array<string>());
- * // config.setItem("m", new Map<string, string>()); // 不支持
- * config.setItem("o", mapToObj(new Map<string, string>())); // 转换成object
- */
-export const config = Configuration.instance;
-
 /**
  * 本地存储配置单例模版方法
  * @param key 数据标识, 默认为类名
@@ -263,7 +260,7 @@ export function SingletonConfig<T>(key?: string) {
             this._isLoad = true;
 
             // 加载数据
-            let data = config.getItem(SingletonProxy._key);
+            let data = Configuration.instance.getItem(SingletonProxy._key);
             if (data) {
                 Object.assign(SingletonProxy._instance, data);
             }
@@ -271,7 +268,7 @@ export function SingletonConfig<T>(key?: string) {
 
         /** 保存数据 */
         save(): void {
-            config.setItem(SingletonProxy._key, SingletonProxy._instance);
+            Configuration.instance.setItem(SingletonProxy._key, SingletonProxy._instance);
         }
     }
 

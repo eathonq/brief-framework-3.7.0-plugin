@@ -7,8 +7,8 @@
 
 import { director, SpriteFrame } from "cc";
 import { EDITOR } from "cc/env";
-import { config } from "../common/Configuration";
-import { stringFormat } from "../common/StringFormat";
+import { Configuration } from "../common/Configuration";
+import { StringUtil } from "../common/StringUtil";
 import { ResourcesUtil } from "../cocos/ResourcesUtil";
 import { LocalizedLabel } from "./LocalizedLabel";
 import { LocalizedSprite } from "./LocalizedSprite";
@@ -37,7 +37,7 @@ export enum I18nMode {
 }
 
 /** 多语言数据管理 */
-class I18n {
+export class I18n {
     //#region instance
     private static _instance: I18n;
     static get instance(): I18n {
@@ -71,7 +71,7 @@ class I18n {
 
         if (EDITOR) return;
 
-        let localLanguage = config.getItem(LOCAL_LANGUAGE_KEY);
+        let localLanguage = Configuration.instance.getItem(LOCAL_LANGUAGE_KEY);
         if (localLanguage) {
             this.setLanguage(localLanguage, false);
         }
@@ -95,7 +95,7 @@ class I18n {
     private setLanguage(language: string, isSave = true): void {
         // 非编辑器模式下，保存本地语言
         if (!EDITOR && isSave) {
-            config.setItem(LOCAL_LANGUAGE_KEY, language);
+            Configuration.instance.setItem(LOCAL_LANGUAGE_KEY, language);
         }
         this._currentLanguageData = this._languages[language];
         this.updateSceneRenderers();
@@ -122,7 +122,7 @@ class I18n {
      * @param watchPath 文本路径 #参数开始标记, $参数分隔符
      * @returns 多语言文本
      * @example
-     * i18n.t('title_1#10$20$30');
+     * I18n.t('title_1#10$20$30');
      */
     t(watchPath: string): string {
         if (watchPath.trim() === '') return;
@@ -144,7 +144,7 @@ class I18n {
         }
         else {
             let arr = watchPath.split(PARAMETER_MARK);
-            return stringFormat.format(this.current(arr[0]), ...arr[1].split(PARAMETER_SPLIT));
+            return StringUtil.format(this.current(arr[0]), ...arr[1].split(PARAMETER_SPLIT));
         }
     }
 
@@ -217,6 +217,3 @@ class I18n {
     }
     //#endregion
 }
-
-/** i18n */
-export const i18n = I18n.instance;

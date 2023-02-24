@@ -7,7 +7,7 @@
 
 import { _decorator, Component, Node, director } from 'cc';
 import { EDITOR } from 'cc/env';
-import { config } from '../common/Configuration';
+import { Configuration } from '../common/Configuration';
 import { ResourcesUtil } from '../cocos/ResourcesUtil';
 const { ccclass, help, menu, property } = _decorator;
 
@@ -34,7 +34,7 @@ export class SkinSprite extends Component {
     }
 
     protected onLoad(): void {
-        skin.init();
+        SkinManager.instance.init();
     }
 
     private _path: string = "";
@@ -55,7 +55,7 @@ export class SkinSprite extends Component {
     }
 }
 
-class SkinManager {
+export class SkinManager {
     //#region 
     private static _instance: SkinManager;
     public static get instance(): SkinManager {
@@ -96,14 +96,14 @@ class SkinManager {
     }
 
     private loadKeyGroupData() {
-        let localSkinGroup = config.getItem(LOCAL_SKIN_KEY);
+        let localSkinGroup = Configuration.instance.getItem(LOCAL_SKIN_KEY);
         if (localSkinGroup) {
             this._keyGroupMap = new Map(Object.entries(localSkinGroup));
         }
     }
 
     private saveKeyGroupData() {
-        config.setItem(LOCAL_SKIN_KEY, Object.fromEntries(this._keyGroupMap));
+        Configuration.instance.setItem(LOCAL_SKIN_KEY, Object.fromEntries(this._keyGroupMap));
     }
     //#endregion
 
@@ -192,8 +192,3 @@ type SkinData = {
     /** 皮肤分组列表数据 */
     groups: SkinGroup[];
 }
-
-/**
- * 皮肤管理器
- */
-export const skin = SkinManager.instance;
