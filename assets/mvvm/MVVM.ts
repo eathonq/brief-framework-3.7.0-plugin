@@ -101,7 +101,7 @@ class DecoratorData {
     markClass(className: string, temp: any) {
         let info = this.getInfo(className);
         info.temp = temp;
-        info.isSetDefaultInEditor = true;
+        info.isSetDefaultInEditor = false;
 
         // 没有指定类型的属性，使用默认值的类型
         for (let key in info.data_kind) {

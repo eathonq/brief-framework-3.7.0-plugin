@@ -8,7 +8,7 @@
 import { _decorator, Node, instantiate, Enum, CCClass } from 'cc';
 import { EDITOR } from 'cc/env';
 import { Locator } from '../cocos/Locator';
-import { observe, reactive } from '../common/ReactiveObserve';
+import { observe, reactive, unobserve } from '../common/ReactiveObserve';
 import { DataContext } from "./DataContext";
 import { decoratorData, DataKind } from './MVVM';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
@@ -119,17 +119,18 @@ export class ItemsSource extends DataContext {
 
     protected onLoad() {
         this.bindDataKind = DataKind.Array;
+        this.initTemplate();
         super.onLoad();
+    }
 
+    protected onDestroy() {
         if (EDITOR) return;
 
-        this.initTemplate();
+        super.onDestroy();
 
-        // 添加初始列表项
-        if (this.dataContext instanceof Array) {
-            this.dataContext.forEach((item, index) => {
-                this.addItem(index, item);
-            });
+        if (this._itemsReaction) {
+            unobserve(this._itemsReaction);
+            this._itemsReaction = null;
         }
     }
 
@@ -138,13 +139,26 @@ export class ItemsSource extends DataContext {
         this.cleanItems();
     }
 
+    /** 观察函数 */
+    private _itemsReaction = null;
     protected onUpdateDataInternal() {
         if (!this._data) return;
+
+        // 清理旧的观察函数
+        if (this._itemsReaction) {
+            unobserve(this._itemsReaction);
+            this._itemsReaction = null;
+        }
+
         // 设置数组观察函数
-        observe((operation) => {
+        this._itemsReaction = observe((operation) => {
             // 更新数组
             let length = this._data.length;
-            if (!operation) return;
+            if (!operation) {
+                // 第一次初始化操作
+                this.initItems(this._data);
+                return;
+            }
 
             let type = operation.type;
             if (type == 'add') {
@@ -160,6 +174,8 @@ export class ItemsSource extends DataContext {
     private _content: Node = null;
     private _template: Node = null;
     private initTemplate() {
+        if (EDITOR) return;
+
         if (!this.template) {
             console.warn(`PATH ${Locator.getNodeFullPath(this.node)} 组件 ItemsSource 没有设置模板节点`);
             return;
@@ -171,6 +187,20 @@ export class ItemsSource extends DataContext {
     }
 
     private _nodeDataList: { node: Node, data: any }[] = [];
+    private initItems(dataList: any[]) {
+        // 等待下一帧再初始化，避免在 onLoad 中初始化时，子节点的 onLoad 还未执行
+        this.scheduleOnce(() => {
+            if (this._content) {
+                this._content.removeAllChildren();
+            }
+            if (dataList && dataList.length > 0) {
+                dataList.forEach((item, index) => {
+                    this.addItem(index, item);
+                });
+            }
+        }, 0);
+    }
+
     private cleanItems() {
         this._nodeDataList = [];
         if (this._content) {

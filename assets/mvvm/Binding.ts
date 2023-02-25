@@ -290,7 +290,7 @@ export class Binding extends CCElement {
 
         this._parent?.unregister(this);
 
-        if (this._isObservable && this._reaction) {
+        if (this._reaction) {
             unobserve(this._reaction);
             this._reaction = null;
         }

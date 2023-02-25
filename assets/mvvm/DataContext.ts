@@ -8,7 +8,7 @@
 import { _decorator, Component, Node, Enum, CCClass } from 'cc';
 import { EDITOR } from 'cc/env';
 import { Locator } from '../cocos/Locator';
-import { observe } from '../common/ReactiveObserve';
+import { observe, unobserve } from '../common/ReactiveObserve';
 import { decoratorData, DataKind } from './MVVM';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
@@ -48,10 +48,10 @@ export class DataContext extends Component {
         displayName: 'DataContext',
         readonly: true,
     })
-    get parent(){
+    get parent() {
         return this._parent;
     }
-    protected set parent(value){
+    protected set parent(value) {
         this._parent = value;
     }
 
@@ -211,6 +211,11 @@ export class DataContext extends Component {
         if (EDITOR) return;
 
         this._parent?.unregister(this);
+
+        if (this._reaction) {
+            unobserve(this._reaction);
+            this._reaction = null;
+        }
     }
 
     private initParentDataContext() {
@@ -225,6 +230,8 @@ export class DataContext extends Component {
         this._parent.register(this, this.onUpdateData);
     }
 
+    /** 观察函数 */
+    private _reaction = null;
     /** 绑定数据更新，子类重写 */
     protected onUpdateData() {
         // 上下文数据异常，则不继续执行
@@ -233,9 +240,14 @@ export class DataContext extends Component {
         this._upperData = this._parent.getDataContextInRegister(this);
         if (!this._upperData) return;
 
+        if (this._reaction) {
+            unobserve(this._reaction);
+            this._reaction = null;
+        }
+
         this._data = this._upperData[this._bindingName];
         // 设置观察函数
-        observe((operation) => {
+        this._reaction = observe((operation) => {
             this._data = this._upperData[this._bindingName];
             this.onUpdateDataInternal();
             if (!operation) return;
@@ -256,7 +268,7 @@ export class DataContext extends Component {
      * @param target 注册对象 
      * @param onUpdateData 数据更新回调
      */
-    register(target:any, onUpdateData:Function){
+    register(target: any, onUpdateData: Function) {
         this._registry.set(target, onUpdateData);
     }
 
@@ -264,7 +276,7 @@ export class DataContext extends Component {
      * 取消注册
      * @param target 注册对象 
      */
-    unregister(target:any){
+    unregister(target: any) {
         this._registry.delete(target);
     }
 
@@ -273,7 +285,7 @@ export class DataContext extends Component {
      * @param target 注册对象
      * @returns 数据上下文
      */
-    getDataContextInRegister(target: any){
+    getDataContextInRegister(target: any) {
         if (this._registry.has(target)) {
             return this._data;
         }
