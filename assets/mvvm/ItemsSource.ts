@@ -124,19 +124,12 @@ export class ItemsSource extends DataContext {
     }
 
     protected onDestroy() {
-        if (EDITOR) return;
-
         super.onDestroy();
 
         if (this._itemsReaction) {
             unobserve(this._itemsReaction);
             this._itemsReaction = null;
         }
-    }
-
-    protected onUpdateData() {
-        super.onUpdateData();
-        this.cleanItems();
     }
 
     /** 观察函数 */
@@ -188,23 +181,16 @@ export class ItemsSource extends DataContext {
 
     private _nodeDataList: { node: Node, data: any }[] = [];
     private initItems(dataList: any[]) {
-        // 等待下一帧再初始化，避免在 onLoad 中初始化时，子节点的 onLoad 还未执行
-        this.scheduleOnce(() => {
-            if (this._content) {
-                this._content.removeAllChildren();
-            }
-            if (dataList && dataList.length > 0) {
-                dataList.forEach((item, index) => {
-                    this.addItem(index, item);
-                });
-            }
-        }, 0);
-    }
-
-    private cleanItems() {
+        // 清理
         this._nodeDataList = [];
         if (this._content) {
             this._content.removeAllChildren();
+        }
+        // 添加默认值
+        if (dataList && dataList.length > 0) {
+            dataList.forEach((item, index) => {
+                this.addItem(index, item);
+            });
         }
     }
 
