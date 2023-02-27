@@ -33,7 +33,7 @@ export class brief {
     static audio: AudioManager;
 
     /** 
-     * 游戏数据
+     * 数据目标
      * @example
      * dataTarget.on("add", (a, b) => {
      *     return a + b;
@@ -50,10 +50,12 @@ export class brief {
     static dataTarget = new DataTarget();
 
     /**
-     * cocos 事件
+     * 事件目标
      * @url https://docs.cocos.com/creator/manual/zh/engine/event/event-emit.html?h=event
      * @example
      * eventTarget.on(GameEvent.EVENT_NAME, this.callback, this);
+     * eventTarget.emit(GameEvent.EVENT_NAME, 'Hello World');
+     * eventTarget.off(GameEvent.EVENT_NAME, this.callback, this);
      */
     static eventTarget = new EventTarget();
 

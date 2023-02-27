@@ -27,9 +27,7 @@ type BindData = {
     isSet?: boolean
 };
 
-/** 
- * 游戏数据
- */
+/** 数据目标 */
 export class DataTarget {
     // 索引签名，可以使用额外的属性
     [key: string]: any;

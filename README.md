@@ -13,7 +13,8 @@
 │   ├── i18n            // 多语言管理
 │   ├── mvvm            // MVVM框架
 │   ├── platform        // 平台代码管理
-│   ├── uitest          // UI测试框架
+│   ├── ui_test         // UI测试框架
+|   ├── Brief.ts        // brief库入口
 ```
 
 ### 技术文档

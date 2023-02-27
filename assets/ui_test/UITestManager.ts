@@ -15,7 +15,7 @@ const TEST_MANAGER_DEBUG = true;
 
 /** UI测试管理 */
 @ccclass('brief.UITestManager')
-@help('https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/uitest/uitestmanager')
+@help('https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/ui-test/uitestmanager')
 @menu('Brief/UITest/UITestManager')
 export class UITestManager extends Component {
     // //#region instance
