@@ -16,40 +16,40 @@ class ViewData {
     /**
      * 视图数据
      * @param viewBase 视图基类
-     * @param isCreate 是否创建（关闭删除标识）
+     * @param isCache 是否缓存（true:关闭时候不需要删除）
      * @param doClose 关闭回调
      * @param doShow 显示回调
      */
-    constructor(viewBase: ViewBase, isCreate: boolean, doClose?: (name: string, data?: any) => void, doShow?: (name: string, data?: any) => void) {
-        this.isCreate = isCreate;
-        this.viewBase = viewBase;
+    constructor(viewBase: ViewBase, isCache: boolean, doClose?: (name: string, data?: any) => void, doShow?: (name: string, data?: any) => void) {
+        this._isCache = isCache;
+        this._viewBase = viewBase;
 
         if (doClose) {
-            this.viewBase['doClose'] = doClose;
+            this._viewBase['doClose'] = doClose;
         }
         if (doShow) {
-            this.viewBase['doShow'] = doShow;
+            this._viewBase['doShow'] = doShow;
         }
     }
 
     /** 视图名称 */
     get viewName() {
-        return this.viewBase.viewName;
+        return this._viewBase.viewName;
     }
 
     /** 视图基础数据 */
-    private viewBase: ViewBase = null;
+    private _viewBase: ViewBase = null;
 
-    /** 新创建标识 */
-    private isCreate: boolean = false;
+    /** 缓存标识 */
+    private _isCache: boolean = false;
 
     /**
      * 显示视图
      * @param data 数据
      */
     show(data?: any) {
-        this.viewBase.node.active = true;
-        this.viewBase.node.emit(ViewEvent, ViewState.Show, data);
+        this._viewBase.node.active = true;
+        this._viewBase.node.emit(ViewEvent, ViewState.Show, data);
     }
 
     /**
@@ -57,8 +57,8 @@ class ViewData {
      * @param data 数据
      */
     hide(data?: any) {
-        this.viewBase.node.emit(ViewEvent, ViewState.Hide, data);
-        this.viewBase.node.active = false;
+        this._viewBase.node.emit(ViewEvent, ViewState.Hide, data);
+        this._viewBase.node.active = false;
     }
 
     /**
@@ -66,12 +66,12 @@ class ViewData {
      * @param data 数据
      */
     close(data?: any) {
-        this.viewBase.node.emit(ViewEvent, ViewState.Close, data);
-        this.viewBase.node.active = false;
-        if (this.isCreate) {
-            this.viewBase.node.destroy();
+        this._viewBase.node.emit(ViewEvent, ViewState.Close, data);
+        this._viewBase.node.active = false;
+        if (!this._isCache) {
+            this._viewBase.node.destroy();
         }
-        this.viewBase = null;
+        this._viewBase = null;
     }
 
     /**
@@ -79,7 +79,7 @@ class ViewData {
      * @param data 数据
      */
     data(data?: any) {
-        this.viewBase.node.emit(ViewEvent, ViewState.Data, data);
+        this._viewBase.node.emit(ViewEvent, ViewState.Data, data);
     }
 }
 
@@ -435,14 +435,14 @@ export class ViewManager extends Component {
             if (newViewBase.isCache) {
                 viewTemplate.node = newViewNode;
                 viewTemplate.viewBase = newViewBase;
-                viewData = new ViewData(newViewBase, false, this.close.bind(this), this.show.bind(this));
+                viewData = new ViewData(newViewBase, true, this.close.bind(this), this.show.bind(this));
             }
             else {
-                viewData = new ViewData(newViewBase, true, this.close.bind(this), this.show.bind(this));
+                viewData = new ViewData(newViewBase, false, this.close.bind(this), this.show.bind(this));
             }
         }
         else {
-            viewData = new ViewData(viewTemplate.viewBase, false, this.close.bind(this), this.show.bind(this));
+            viewData = new ViewData(viewTemplate.viewBase, true, this.close.bind(this), this.show.bind(this));
         }
 
         return viewData;

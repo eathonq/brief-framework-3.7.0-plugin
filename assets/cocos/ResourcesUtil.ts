@@ -9,15 +9,13 @@ import { Node, SpriteFrame, resources, Texture2D, Sprite, JsonAsset, assetManage
 
 /** 资源工具 */
 export class ResourcesUtil {
-    private static _isBundle: boolean = false;
-    private static _bundleName: string = "";
+    private static _bundleName: string;
     /**
      * 绑定分包
      * @info 当默认资源也需要分包时使用，避免大量改动资源加载方式
      * @param name 分包名称
      */
     static bindBundle(name: string) {
-        this._isBundle = true;
         this._bundleName = name;
     }
 
@@ -30,7 +28,7 @@ export class ResourcesUtil {
     static async getSpriteFrame(path: string, formate = "spriteFrame"): Promise<SpriteFrame> {
         if (!path || path.trim() === '') return null;
 
-        if (this._isBundle) {
+        if (!this._bundleName) {
             return BundleUtil.getSpriteFrame(this._bundleName, path, formate);
         }
 
@@ -91,7 +89,7 @@ export class ResourcesUtil {
     static async getAudioClip(path: string): Promise<AudioClip> {
         if (!path || path.trim() === '') return null;
 
-        if (this._isBundle) {
+        if (!this._bundleName) {
             return BundleUtil.getAudioClip(this._bundleName, path);
         }
 
@@ -114,7 +112,7 @@ export class ResourcesUtil {
     static async getJson<T>(path: string): Promise<T> {
         if (!path || path.trim() === '') return null;
 
-        if (this._isBundle) {
+        if (!this._bundleName) {
             return BundleUtil.getJson(this._bundleName, path);
         }
 

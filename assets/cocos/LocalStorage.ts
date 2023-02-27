@@ -1,3 +1,10 @@
+/**
+ * brief-framework
+ * author = vangagh@live.cn
+ * editor = vangagh@live.cn
+ * update = 2023-02-03 14:58
+ */
+
 import { sys } from "cc";
 import { IStorage, storageInit } from "../common/Configuration";
 

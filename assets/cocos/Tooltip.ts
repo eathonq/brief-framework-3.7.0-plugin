@@ -17,7 +17,14 @@ export type TooltipData = {
 
 /** 提示框 */
 export class Tooltip {
-    private static timer: any = null;
+    /** 超时计时器 */
+    private static _timer: any;
+    private static cleanTimer() {
+        if (Tooltip._timer) {
+            clearTimeout(Tooltip._timer);
+            Tooltip._timer = null;
+        }
+    }
 
     /**
      * 显示提示框
@@ -28,18 +35,15 @@ export class Tooltip {
     static show(content: string, timeouts?: number, tooltip?: string) {
         let data: TooltipData = {
             content, resolve: () => {
-                if (timeouts) {
-                    clearTimeout(Tooltip.timer);
-                    Tooltip.timer = null;
-                }
+                Tooltip.cleanTimer();
             }
         };
         ViewManager.instance.showTooltip(tooltip, data);
+        Tooltip.cleanTimer();
         if (timeouts) {
-            clearTimeout(Tooltip.timer);
-            Tooltip.timer = setTimeout(() => {
+            Tooltip._timer = setTimeout(() => {
                 ViewManager.instance.closeTooltip(tooltip);
-                Tooltip.timer = null;
+                Tooltip._timer = null;
             }, timeouts * 1000);
         }
     }

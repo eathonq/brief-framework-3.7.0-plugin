@@ -20,9 +20,6 @@
 
 /** 方格数据 */
 export class SquareGrid {
-    private width: number;
-    private height: number;
-    private walls: {};
     /**
      * 初始化方格数据
      * @param width 宽度
@@ -30,22 +27,26 @@ export class SquareGrid {
      * @param walls 墙体数据
      */
     constructor(width: number, height: number, walls?: { x: number, y: number }[]) {
-        this.width = width;
-        this.height = height;
-        this.walls = {};
+        this._width = width;
+        this._height = height;
+        this._walls = {};
         if (walls) {
             for (let wall of walls) {
-                this.walls[`${wall.x}_${wall.y}`] = true;
+                this._walls[`${wall.x}_${wall.y}`] = true;
             }
         }
     }
 
+    private _width: number;
+    private _height: number;
+    private _walls: {};
+
     private inBounds(id: { x: number; y: number; }) {
-        return id.x >= 0 && id.x < this.width && id.y >= 0 && id.y < this.height;
+        return id.x >= 0 && id.x < this._width && id.y >= 0 && id.y < this._height;
     }
 
     private passable(id: { x: number; y: number; }) {
-        return !this.walls[`${id.x}_${id.y}`];
+        return !this._walls[`${id.x}_${id.y}`];
     }
 
     neighbors(id: { x: number; y: number; }) {
@@ -60,7 +61,6 @@ export class SquareGrid {
 
 /** 带权重的方格数据 */
 export class GridWithWeights extends SquareGrid {
-    private weights: {};
     /**
      * 初始化带权重的方格数据
      * @param width 宽度
@@ -70,18 +70,20 @@ export class GridWithWeights extends SquareGrid {
      */
     constructor(width: number, height: number, walls?: { x: number, y: number }[], weights?: { x: number, y: number, weight: number }[]) {
         super(width, height, walls);
-        this.weights = weights;
+        this._weights = weights;
 
-        this.weights = {};
+        this._weights = {};
         if (weights) {
             for (let weight of weights) {
-                this.weights[`${weight.x}_${weight.y}`] = weight.weight;
+                this._weights[`${weight.x}_${weight.y}`] = weight.weight;
             }
         }
     }
 
+    private _weights: {};
+
     cost(from: { x: number; y: number; }, to: { x: number; y: number; }) {
-        return this.weights[`${to.x}_${to.y}`] || 1;
+        return this._weights[`${to.x}_${to.y}`] || 1;
     }
 }
 //#endregion
@@ -90,50 +92,52 @@ export class GridWithWeights extends SquareGrid {
 
 /** 队列 */
 export class Queue {
-    private elements: any[];
     /** 队列 */
     constructor() {
-        this.elements = [];
+        this._elements = [];
     }
 
+    private _elements: any[];
+
     empty() {
-        return this.elements.length == 0;
+        return this._elements.length == 0;
     }
 
     put(item: { x: number; y: number; }) {
-        this.elements.push(item);
+        this._elements.push(item);
     }
 
     get() {
-        return this.elements.shift();
+        return this._elements.shift();
     }
 }
 
 /** 优先队列 */
 export class PriorityQueue {
-    private elements: any[];
     /** 优先队列 */
     constructor() {
-        this.elements = [];
+        this._elements = [];
     }
 
+    private _elements: any[];
+
     empty() {
-        return this.elements.length == 0;
+        return this._elements.length == 0;
     }
 
     put(item: { x: number; y: number; }, priority: number) {
         // 最小priority 排在前面
-        for (let i = 0; i < this.elements.length; i++) {
-            if (this.elements[i].priority >= priority) {
-                this.elements.splice(i, 0, { item, priority });
+        for (let i = 0; i < this._elements.length; i++) {
+            if (this._elements[i].priority >= priority) {
+                this._elements.splice(i, 0, { item, priority });
                 return;
             }
         }
-        this.elements.push({ item, priority });
+        this._elements.push({ item, priority });
     }
 
     get() {
-        return this.elements.shift().item;
+        return this._elements.shift().item;
     }
 }
 

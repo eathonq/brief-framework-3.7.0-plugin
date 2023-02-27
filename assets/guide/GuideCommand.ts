@@ -109,23 +109,26 @@ export class GuideCommand {
         });
     }
 
-    private timer: any;
+    private _timer: any;
+    private cleanTimer() {
+        if (this._timer) {
+            clearTimeout(this._timer);
+            this._timer = null;
+        }
+    }
     private async doTooltip(data: TooltipCommandData) {
         return new Promise<void>((resolve) => {
             ViewManager.instance.showTooltip(data.type, {
                 content: data.content, resolve: () => {
-                    if (this.timer) {
-                        clearTimeout(this.timer);
-                        this.timer = null;
-                    }
+                    this.cleanTimer();
                     resolve();
                 }
             });
+            this.cleanTimer();
             if (data.timeout) {
-                clearTimeout(this.timer);
-                this.timer = setTimeout(() => {
+                this._timer = setTimeout(() => {
                     ViewManager.instance.closeTooltip(data.type);
-                    this.timer = null;
+                    this._timer = null;
                 }, data.timeout * 1000);
             }
         });
