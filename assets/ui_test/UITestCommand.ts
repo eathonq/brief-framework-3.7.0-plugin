@@ -6,8 +6,8 @@
  */
 
 import { Button, director, EditBox, Label, ScrollView, Slider, Toggle, Vec2 } from "cc";
-import { Locator } from "../cocos/Locator";
-import { ViewManager } from "../cocos/ViewManager";
+import { Locator } from "../common/Locator";
+import { ViewManager } from "../common/ViewManager";
 
 //#region UITest Data
 

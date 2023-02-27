@@ -6,7 +6,7 @@
  */
 
 import { sys } from 'cc';
-import { IStorage, storageInit } from '../../common/Configuration';
+import { IStorage, storageInit } from '../../base/Configuration';
 
 let checkWechatGame = (): boolean => { return sys.platform == sys.Platform.WECHAT_GAME };
 

@@ -7,9 +7,9 @@
 
 import { director, SpriteFrame } from "cc";
 import { EDITOR } from "cc/env";
-import { Configuration } from "../common/Configuration";
-import { StringUtil } from "../common/StringUtil";
-import { ResourcesUtil } from "../cocos/ResourcesUtil";
+import { Configuration } from "../base/Configuration";
+import { StringUtil } from "../base/StringUtil";
+import { ResourcesUtil } from "../common/ResourcesUtil";
 import { LocalizedLabel } from "./LocalizedLabel";
 import { LocalizedSprite } from "./LocalizedSprite";
 

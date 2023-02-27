@@ -6,7 +6,7 @@
  */
 
 import { EDITOR } from 'cc/env';
-import { reactive } from '../common/ReactiveObserve';
+import { reactive } from '../base/ReactiveObserve';
 import { DataContext } from './DataContext';
 
 /**

@@ -6,8 +6,8 @@
  */
 
 import { Component, director, Node } from "cc";
-import { Locator } from "../cocos/Locator";
-import { ViewManager } from "../cocos/ViewManager";
+import { Locator } from "../common/Locator";
+import { ViewManager } from "../common/ViewManager";
 
 //#region Guide Data
 export type ClickCommandData = {

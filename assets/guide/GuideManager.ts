@@ -7,8 +7,8 @@
 
 import { _decorator, Node, Component, director, Prefab, instantiate, JsonAsset } from "cc";
 import { EDITOR } from "cc/env";
-import { Configuration } from "../common/Configuration";
-import { ResourcesUtil } from "../cocos/ResourcesUtil";
+import { Configuration } from "../base/Configuration";
+import { ResourcesUtil } from "../common/ResourcesUtil";
 import { GuideCommand, GuideMaskBase, GuideStep, GuideTask } from "./GuideCommand";
 import { brief } from "../Brief";
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;

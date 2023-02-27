@@ -7,8 +7,8 @@
 
 import { _decorator, Node, instantiate, Enum, CCClass } from 'cc';
 import { EDITOR } from 'cc/env';
-import { Locator } from '../cocos/Locator';
-import { observe, reactive, unobserve } from '../common/ReactiveObserve';
+import { observe, reactive, unobserve } from '../base/ReactiveObserve';
+import { Locator } from '../common/Locator';
 import { DataContext } from "./DataContext";
 import { decoratorData, DataKind } from './MVVM';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;

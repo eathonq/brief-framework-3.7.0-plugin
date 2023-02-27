@@ -6,7 +6,7 @@
  */
 
 import { sys } from "cc";
-import { IStorage, storageInit } from "../common/Configuration";
+import { IStorage, storageInit } from "../base/Configuration";
 
 /** 本地存储 */
 class LocalStorage implements IStorage {

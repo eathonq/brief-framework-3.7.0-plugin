@@ -7,8 +7,8 @@
 
 import { _decorator, Component, Node, director } from 'cc';
 import { EDITOR } from 'cc/env';
-import { Configuration } from '../common/Configuration';
-import { ResourcesUtil } from '../cocos/ResourcesUtil';
+import { Configuration } from '../base/Configuration';
+import { ResourcesUtil } from '../common/ResourcesUtil';
 const { ccclass, help, menu, property } = _decorator;
 
 const LOCAL_SKIN_KEY = 'local_skin'; // 本地皮肤 key

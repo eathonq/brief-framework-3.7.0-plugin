@@ -272,9 +272,9 @@ class ViewStack {
 
 /** 视图管理 */
 @ccclass('brief.ViewManager')
-@help('https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/cocos/viewmanager')
+@help('https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/common/viewmanager')
 @executeInEditMode
-@menu('Brief/Cocos/ViewManager')
+@menu('Brief/Common/ViewManager')
 export class ViewManager extends Component {
     //#region instance
     private static _instance: ViewManager = null;

@@ -7,7 +7,7 @@
 
 import { _decorator, Component, Node, director, JsonAsset } from 'cc';
 import { EDITOR } from 'cc/env';
-import { ResourcesUtil } from '../cocos/ResourcesUtil';
+import { ResourcesUtil } from '../common/ResourcesUtil';
 import { TestTask, UITestCommand } from './UITestCommand';
 const { ccclass, help, menu, property } = _decorator;
 

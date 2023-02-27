@@ -1,16 +1,16 @@
 import { EventTarget } from 'cc';
 
-import { AudioManager } from "./cocos/AudioManager";
-import { MessageBox } from "./cocos/MessageBox";
-import { Tooltip } from "./cocos/Tooltip";
-import { ViewManager } from "./cocos/ViewManager";
-import { ResourcesUtil, BundleUtil } from "./cocos/ResourcesUtil";
-import { Locator } from "./cocos/Locator";
+import { AudioManager } from "./common/AudioManager";
+import { MessageBox } from "./common/MessageBox";
+import { Tooltip } from "./common/Tooltip";
+import { ViewManager } from "./common/ViewManager";
+import { ResourcesUtil, BundleUtil } from "./common/ResourcesUtil";
+import { Locator } from "./common/Locator";
 import { I18n } from "./i18n/I18n";
 import { CameraFollow } from "./expand/CameraFollow";
 import { SkinManager } from "./expand/SkinSprite";
 import { GuideManager } from "./guide/GuideManager";
-import { DataTarget } from "./cocos/DataTarget";
+import { DataTarget } from "./common/DataTarget";
 
 /** brief cocos 模块便捷访问入口 */
 export class brief {
