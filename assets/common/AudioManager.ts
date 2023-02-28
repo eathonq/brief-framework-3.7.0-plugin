@@ -2,13 +2,14 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-01-30 16:14
+ * update = 2023-02-28 13:48
  */
 
-import { _decorator, Node, AudioClip, AudioSource, Component, director } from "cc";
+import { _decorator, Node, AudioClip, AudioSource, Component, director, NodePool, path } from "cc";
 import { EDITOR } from "cc/env";
 import { brief } from "../Brief";
 import { Configuration } from "../base/Configuration";
+import { EventMutex } from "../base/EventMutex";
 import { ResourcesUtil } from "./ResourcesUtil";
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
@@ -24,13 +25,6 @@ interface AudioConfig {
     volumeSound: number,
     /** 背景音乐音量 */
     volumeMusic: number,
-}
-/** 声音音频源 */
-class SoundAudioSource {
-    path: string;
-    isPause: boolean = false;
-    audioSource: AudioSource;
-    clip: AudioClip;
 }
 
 /** 音频管理 */
@@ -73,10 +67,10 @@ export class AudioManager extends Component {
     private _musicAudioSource: AudioSource;
     /** 一次性音效AudioSource */
     private _oneShotAudioSource: AudioSource;
-    /** 音效AudioSource表 */
-    private _soundAudioSourceMap: Map<string, SoundAudioSource>;
+    /** 音效SoundAudioSource表 */
+    private _soundAudioSourceMap: Map<number, AudioSource>;
     /** 缓存音频文件 */
-    private _audioClipDict: { [name: string]: AudioClip };
+    private _audioClipDict: Map<string, AudioClip>;
 
     /** 背景音乐声音（0.0 ~ 1.0） */
     private _volumeMusic = 1;
@@ -88,15 +82,13 @@ export class AudioManager extends Component {
     /** 音效开关 */
     private _switchSound: boolean;
 
-    // private readonly soundPathSecurityCount = 22; //同时播放的音效种类数量
-
     protected onLoad(): void {
         if (EDITOR) return;
 
         brief.audio = this;
 
-        this._soundAudioSourceMap = new Map<string, SoundAudioSource>();
-        this._audioClipDict = {};
+        this._soundAudioSourceMap = new Map<number, AudioSource>();
+        this._audioClipDict = new Map<string, AudioClip>();
 
         // 从配置中读取音频配置
         let audioSetting = this.loadAudioConfig();
@@ -111,40 +103,36 @@ export class AudioManager extends Component {
         // 初始化短音频音频组件
         this._oneShotAudioSource = this.node.addComponent(AudioSource);
 
-        // 设置配置背景音乐
+        // 初始化配置背景音乐
         if (this.musicClip) {
             this._musicAudioSource.clip = this.musicClip;
             this._musicAudioSource.loop = true;
             this._musicAudioSource.volume = this._volumeMusic;
-
             if (this.playOnLoad) {
                 this._musicAudioSource.play();
-            }
-            else {
-                this._musicAudioSource.stop();
             }
         }
     }
 
     /**
      * 播放背景音乐
-     * @param music 背景音乐
-     * @param loop 是否循环
+     * @param music 背景音乐或路径，音频路径（不包含后缀，相对路径从resources子目录算起）
+     * @param loop 是否循环（默认循环）
      * @returns 
      */
     async playMusic(music: AudioClip | string, loop: boolean = true): Promise<void> {
         if (!music) return;
 
         this._musicAudioSource?.stop();
-        
+
         if (typeof music == "string") {
             music = await this.getOrCreateAudioClip(music);
             if (!music) return;
         }
 
         this._musicAudioSource.clip = music;
-        this._musicAudioSource.loop = loop;
         this._musicAudioSource.volume = this._volumeMusic;
+        this._musicAudioSource.loop = loop;
         if (this._switchMusic) {
             this._musicAudioSource.play();
         }
@@ -236,43 +224,48 @@ export class AudioManager extends Component {
         return this._musicAudioSource.playing;
     }
 
-    /** 播放一次性音频 */
-    async playOneShotSound(path: string): Promise<void> {
+    /** 
+     * 以指定音量倍数播放一个音频一次（过程不再接管）
+     * @param path 音频路径（不包含后缀，相对路径从resources子目录算起）
+     * @param volumeScale 音量倍数（0.0 ~ 1.0）
+     */
+    async playOneShot(path: string, volumeScale?: number): Promise<void> {
         if (this._switchSound) {
             let audioClip = await this.getOrCreateAudioClip(path);
             if (audioClip) {
-                this._oneShotAudioSource.playOneShot(audioClip, this._volumeSound);
+                this._oneShotAudioSource.playOneShot(audioClip, volumeScale | this._volumeSound);
             }
         }
     }
 
+    /** 音效id计数器 */
+    private _soundIdCounter = 0;
+    /** 音效事件锁 */
+    private _playEventMutex = new EventMutex(1);
     /**
      * 播放音效
-     * @param path 地址
-     * @param loop 是否循环
-     * @returns 
+     * @param path 音频路径（不包含后缀，相对路径从resources子目录算起）
+     * @param onStop 停止播放回调
+     * @param volumeScale 音量倍数（0.0 ~ 1.0）
+     * @param loop 是否循环（默认不循环）
+     * @returns Promise<string> 音效id, 用于后续管理（返回-1表示播放失败）
      */
-    async playSound(path: string, loop: boolean = false): Promise<void> {
+    async playSound(path: string, onStop?: Function, volumeScale?: number, loop: boolean = false): Promise<number> {
         if (this._switchSound == false) {
-            return;
+            return -1;
         }
 
-        let soundAudioSource = this.getOrCreateSoundAudioSource(path);
-        if (!soundAudioSource) return;
-
-        if (!soundAudioSource.clip) {
-            soundAudioSource.clip = await this.getOrCreateAudioClip(path);
-            soundAudioSource.audioSource.clip = soundAudioSource.clip;
-        }
-
-        soundAudioSource.audioSource.loop = loop;
-        soundAudioSource.audioSource.volume = this._volumeSound;
-        soundAudioSource.audioSource.play();
-
-        // 播放结束后回收
-        // soundAudioSource.audioSource.node.once(AudioSource.EventType.ENDED, () => {
-        // });
+        await this._playEventMutex.wait();
+        let soundId = ++this._soundIdCounter;
+        let item = this.createSoundAudioSource(soundId, onStop);
+        item.clip = await this.getOrCreateAudioClip(path);
+        item.volume = volumeScale | this._volumeSound;
+        item.loop = loop;
+        item.play();
+        this._playEventMutex.notify();
+        return soundId;
     }
+
     /**
      * 转换音效播放开关(仅关闭正在播放的音效)
      * @param isSwitch 
@@ -289,7 +282,7 @@ export class AudioManager extends Component {
 
         if (!this._switchSound) {
             for (const item of this._soundAudioSourceMap.values()) {
-                if (item.audioSource.playing) item.audioSource.stop();
+                this.stopSoundAudioSource(item);
             }
         }
         this.saveAudioConfig();
@@ -312,7 +305,7 @@ export class AudioManager extends Component {
         this._volumeSound = volume;
         // 设置音效声音大小
         for (const item of this._soundAudioSourceMap.values()) {
-            item.audioSource.volume = volume;
+            item.volume = volume;
         }
 
         this.saveAudioConfig();
@@ -328,15 +321,12 @@ export class AudioManager extends Component {
 
     /**
      * 暂停指定音效
-     * @param path 
+     * @param soundId 音效id
      */
-    pauseSound(path: string) {
-        let item = this._soundAudioSourceMap.get(path);
-        if (item) {
-            if (item.audioSource.playing) {
-                item.audioSource.pause();
-                item.isPause = true;
-            }
+    pauseSound(soundId: number) {
+        let item = this._soundAudioSourceMap.get(soundId);
+        if (item && item.playing) {
+            item.pause();
         }
     }
 
@@ -345,24 +335,20 @@ export class AudioManager extends Component {
      */
     pauseAllSounds() {
         for (const item of this._soundAudioSourceMap.values()) {
-            if (item.audioSource.playing) {
-                item.audioSource.pause();
-                item.isPause = true;
+            if (item.playing) {
+                item.pause();
             }
         }
     }
 
     /**
      * 恢复指定音效
-     * @param path 
+     * @param soundId 音效id
      */
-    resumeSound(path: string) {
-        let item = this._soundAudioSourceMap.get(path);
-        if (item) {
-            if (item.isPause) {
-                item.audioSource.play();
-                item.isPause = false;
-            }
+    resumeSound(soundId: number) {
+        let item = this._soundAudioSourceMap.get(soundId);
+        if (item && !item.playing) {
+            item.play();
         }
     }
 
@@ -371,22 +357,20 @@ export class AudioManager extends Component {
      */
     resumeAllSounds() {
         for (const item of this._soundAudioSourceMap.values()) {
-            if (item.isPause) {
-                item.audioSource.play();
-                item.isPause = false;
+            if (!item.playing) {
+                item.play();
             }
         }
     }
 
     /**
      * 停止播放指定音效
-     * @param path 
+     * @param soundId 音效id
      */
-    stopSound(path: string) {
-        let item = this._soundAudioSourceMap.get(path);
+    stopSound(soundId: number) {
+        let item = this._soundAudioSourceMap.get(soundId);
         if (item) {
-            item.audioSource.stop();
-            item.isPause = false;
+            this.stopSoundAudioSource(item);
         }
     }
 
@@ -395,16 +379,18 @@ export class AudioManager extends Component {
      */
     stopAllSounds() {
         for (const item of this._soundAudioSourceMap.values()) {
-            item.audioSource.stop();
-            item.isPause = false;
+            this.stopSoundAudioSource(item);
         }
     }
 
-    /**
-     * 获取音频文件,获取后会缓存一份
-     * @param path 音频文件路径
-     * @returns 
-     */
+    /** 释放所有使用过的音效资源 */
+    releaseAllAudioClip() {
+        for(let path in this._audioClipDict) {
+            ResourcesUtil.release(path);
+        }
+        this._audioClipDict.clear();
+    }
+
     private async getOrCreateAudioClip(path: string): Promise<AudioClip> {
         if (this._audioClipDict[path] == null) {
             this._audioClipDict[path] = await ResourcesUtil.getAudioClip(path);
@@ -413,19 +399,35 @@ export class AudioManager extends Component {
         return this._audioClipDict[path];
     }
 
-    private getOrCreateSoundAudioSource(path: string): SoundAudioSource {
-        if (this._soundAudioSourceMap.has(path)) {
-            return this._soundAudioSourceMap.get(path);
+    private _audioSourceNodePool: NodePool = new NodePool("AUDIO_SOUND_NODE_POOL");
+    private createSoundAudioSource(soundId: number, onStop?: Function): AudioSource {
+        let newNode = this._audioSourceNodePool.get();
+        if (!newNode) {
+            newNode = new Node();
+            newNode.addComponent(AudioSource);
+            this.node.addChild(newNode);
         }
-        else {
-            // console.log("新建音效音频组件");
-            let audioSource = this.node.addComponent(AudioSource);
-            let soundAudioSource = new SoundAudioSource();
-            soundAudioSource.path = path;
-            soundAudioSource.audioSource = audioSource;
-            this._soundAudioSourceMap.set(path, soundAudioSource);
-            return soundAudioSource;
-        }
+        //newNode.off(AudioSource.EventType.ENDED);
+        // 播放结束后回收
+        newNode.once(AudioSource.EventType.ENDED, () => {
+            let item = this._soundAudioSourceMap.get(soundId);
+            if (item) {
+                onStop?.();
+                this._soundAudioSourceMap.delete(soundId);
+                // test
+                // console.log(`size = ${this._soundAudioSourceMap.size}`);
+            }
+            this._audioSourceNodePool.put(newNode);
+        }, this);
+
+        let audioSource = newNode.getComponent(AudioSource)
+        this._soundAudioSourceMap.set(soundId, audioSource);
+        return audioSource;
+    }
+
+    private stopSoundAudioSource(item: AudioSource) {
+        item.stop();
+        item.node.emit(AudioSource.EventType.ENDED);
     }
 
     private loadAudioConfig(): AudioConfig {

@@ -126,6 +126,20 @@ export class ResourcesUtil {
             });
         });
     }
+
+    /**
+     * 释放资源
+     * @param path 资源路径（不包含后缀，相对路径从resources子目录算起）
+     */
+    static release(path: string) {
+        if (!path || path.trim() === '') return;
+
+        if (this._bundleName) {
+            BundleUtil.release(this._bundleName, path);
+        } else {
+            resources.release(path);
+        }
+    }
 }
 
 /** 分包资源工具 */
@@ -274,5 +288,19 @@ export class BundleUtil {
                 }
             });
         });
+    }
+
+    /**
+     * 释放资源
+     * @param name 分包名称
+     * @param path 资源路径（不包含后缀，相对路径从分包子目录算起）
+     */
+    static release(name: string, path: string) {
+        let bundle = this._bundleMap.get(name);
+        if (!bundle) {
+            return;
+        }
+
+        bundle.release(path);
     }
 }
