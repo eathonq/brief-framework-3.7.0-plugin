@@ -5,35 +5,59 @@
  * update = 2023-02-28 17:55
  */
 
+/** 日志标签 */
+enum LoggerTags {
+    /** 调试日志 */
+    DEBUG = 1 << 0,
+    /** 信息日志 */
+    INFO = 1 << 1,
+    /** 警告日志 */
+    WARN = 1 << 2,
+    /** 错误日志 */
+    ERROR = 1 << 3,
+    /** 断言日志 */
+    ASSERT = 1 << 4,
+    /** 颜色日志 */
+    COLOR = 1 << 5,
+    /** 所有日志 */
+    ALL = 0xffffffff
+}
+
+/** 日志颜色 */
+enum LoggerColors {
+    /** 灰色 */
+    GRAY = "color:gray",
+    /** 蓝色 */
+    BLUE = "color:blue",
+    /** 紫色 */
+    PURPLE = "color:purple",
+    /** 绿色 */
+    GREEN = "color:green",
+    /** 橙色 */
+    ORANGE = "color:orange",
+    /** 红色 */
+    RED = "color:red",
+    /** 黄色 */
+    YELLOW = "color:yellow",
+    /** 白色 */
+    WHITE = "color:white",
+}
+
 /** 控制台日志输出类 */
 class Logger {
     /** 日志标签 */
-    static get TAGS() {
-        return {
-            /** 调试日志 */
-            DEBUG: 1 << 0,
-            /** 信息日志 */
-            INFO: 1 << 1,
-            /** 警告日志 */
-            WARN: 1 << 2,
-            /** 错误日志 */
-            ERROR: 1 << 3,
-            /** 断言日志 */
-            ASSERT: 1 << 4,
-            /** 颜色日志 */
-            COLOR: 1 << 5,
-            /** 所有日志 */
-            ALL: 0xffffffff
-        }
-    }
+    static Tags = LoggerTags;
+
+    /** 默认颜色 */
+    static Colors = LoggerColors;
 
     /** 显示的日志标签 */
     private static _tags: number =
-        this.TAGS.DEBUG |
-        this.TAGS.INFO |
-        this.TAGS.WARN |
-        this.TAGS.ERROR |
-        this.TAGS.COLOR;
+        LoggerTags.DEBUG |
+        LoggerTags.INFO |
+        LoggerTags.WARN |
+        LoggerTags.ERROR |
+        LoggerTags.COLOR;
 
     /**
      * 设置显示的日志标签
@@ -92,72 +116,52 @@ class Logger {
         console.table(data, columns);
     }
 
-    /** 默认颜色 */
-    static get COLORS() {
-        return {
-            /** 灰色 */
-            GRAY: "color:gray",
-            /** 蓝色 */
-            BLUE: "color:#3a5fcd",
-            /** 橙色 */
-            ORANGE: "color:orange",
-            /** 红色 */
-            RED: "color:red",
-            /** 紫色 */
-            PURPLE: "color:purple",
-            /** 绿色 */
-            GREEN: "color:green",
-            /** 黄色 */
-            YELLOW: "color:yellow",
-        }
-    }
-
     static debug(...args: any[]) {
-        this.print(this.TAGS.DEBUG, this.COLORS.GRAY, ...args);
+        this.print(LoggerTags.DEBUG, LoggerColors.GRAY, ...args);
     }
 
     static info(...args: any[]) {
-        this.print(this.TAGS.INFO, this.COLORS.BLUE, ...args);
+        this.print(LoggerTags.INFO, LoggerColors.BLUE, ...args);
     }
 
     static warn(...args: any[]) {
-        this.print(this.TAGS.WARN, this.COLORS.ORANGE, ...args);
+        this.print(LoggerTags.WARN, LoggerColors.ORANGE, ...args);
     }
 
     static error(...args: any[]) {
-        this.print(this.TAGS.ERROR, this.COLORS.RED, ...args);
+        this.print(LoggerTags.ERROR, LoggerColors.RED, ...args);
     }
 
     static assert(...args: any[]) {
-        this.print(this.TAGS.ASSERT, this.COLORS.PURPLE, ...args);
+        this.print(LoggerTags.ASSERT, LoggerColors.PURPLE, ...args);
     }
 
     static gray(...args: any[]) {
-        this.print(this.TAGS.COLOR, this.COLORS.GRAY, ...args);
+        this.print(LoggerTags.COLOR, LoggerColors.GRAY, ...args);
     }
 
     static blue(...args: any[]) {
-        this.print(this.TAGS.COLOR, this.COLORS.BLUE, ...args);
+        this.print(LoggerTags.COLOR, LoggerColors.BLUE, ...args);
     }
 
     static orange(...args: any[]) {
-        this.print(this.TAGS.COLOR, this.COLORS.ORANGE, ...args);
+        this.print(LoggerTags.COLOR, LoggerColors.ORANGE, ...args);
     }
 
     static red(...args: any[]) {
-        this.print(this.TAGS.COLOR, this.COLORS.RED, ...args);
+        this.print(LoggerTags.COLOR, LoggerColors.RED, ...args);
     }
 
     static purple(...args: any[]) {
-        this.print(this.TAGS.COLOR, this.COLORS.PURPLE, ...args);
+        this.print(LoggerTags.COLOR, LoggerColors.PURPLE, ...args);
     }
 
     static green(...args: any[]) {
-        this.print(this.TAGS.COLOR, this.COLORS.GREEN, ...args);
+        this.print(LoggerTags.COLOR, LoggerColors.GREEN, ...args);
     }
 
     static yellow(...args: any[]) {
-        this.print(this.TAGS.COLOR, this.COLORS.YELLOW, ...args);
+        this.print(LoggerTags.COLOR, LoggerColors.YELLOW, ...args);
     }
 
     static print(tag: number, color: string, ...args: any[]) {
@@ -202,10 +206,10 @@ class Logger {
     }
 
     private static getTagName(tag: number): string {
-        if (tag == this.TAGS.COLOR) return "";
-        const tags = Object.keys(this.TAGS);
+        if (tag == LoggerTags.COLOR) return "";
+        const tags = Object.keys(LoggerTags);
         for (let i = 0; i < tags.length; i++) {
-            if (this.TAGS[tags[i]] == tag) {
+            if (LoggerTags[tags[i]] == tag) {
                 return `[${tags[i].toLocaleLowerCase()}]`;
             }
         }

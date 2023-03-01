@@ -9,7 +9,7 @@ import { CCInteger, Component, Enum, error, Layout, math, Node, ScrollView, twee
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /** ScrollView方向类型 */
-export enum Direction {
+enum ScrollViewDirection {
     /** 水平方向 */
     HORIZONTAL = 0,
     /** 垂直方向 */
@@ -24,6 +24,9 @@ export enum Direction {
 @executeInEditMode
 @menu('Brief/Common/ScrollViewDynamic')
 export class ScrollViewDynamic extends Component {
+
+    /** ScrollView方向类型 */
+    static Direction = ScrollViewDirection;
 
     //#region  组件属性
     @property({
@@ -48,11 +51,11 @@ export class ScrollViewDynamic extends Component {
     private content: Node = null;
 
     @property({
-        type: Enum(Direction),
+        type: Enum(ScrollViewDirection),
         readonly: true,
         tooltip: '滚动视图方向',
     })
-    public direction: Direction = Direction.VERTICAL;
+    public direction: ScrollViewDirection = ScrollViewDirection.VERTICAL;
 
     @property({
         type: CCInteger, min: 1, step: 1,
@@ -97,7 +100,7 @@ export class ScrollViewDynamic extends Component {
             }
         }
 
-        this.direction = this.scrollView.vertical ? Direction.VERTICAL : Direction.HORIZONTAL;
+        this.direction = this.scrollView.vertical ? ScrollViewDirection.VERTICAL : ScrollViewDirection.HORIZONTAL;
 
         return true;
     }
@@ -110,7 +113,7 @@ export class ScrollViewDynamic extends Component {
     }
 
     private initScrollView() {
-        if (this.direction == Direction.VERTICAL) {
+        if (this.direction == ScrollViewDirection.VERTICAL) {
             this.scrollView.node.on(ScrollView.EventType.SCROLLING, this.onScrollingWithVertical, this);
         }
         else {
@@ -234,7 +237,7 @@ export class ScrollViewDynamic extends Component {
 
     private _firstRefresh = false;
     private refresh() {
-        if (this.direction == Direction.VERTICAL) {
+        if (this.direction == ScrollViewDirection.VERTICAL) {
             if (!this._firstRefresh) {
                 this._firstRefresh = true;
                 // 第一次初始化时，通过滚动到顶部位置初始化内容项目位置参数
@@ -307,7 +310,7 @@ export class ScrollViewDynamic extends Component {
 
         // 计算滚动位置
         let pos: math.Vec2;
-        if (this.direction == Direction.VERTICAL) {
+        if (this.direction == ScrollViewDirection.VERTICAL) {
             let child = this.content.children[index];
             let childTransform = child.getComponent(UITransform);
             let childTop = -child.position.y - childTransform.height * childTransform.anchorY;

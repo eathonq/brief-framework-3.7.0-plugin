@@ -8,7 +8,7 @@
 import { _decorator, Node, Component, director, Prefab, instantiate } from 'cc';
 import { EDITOR } from 'cc/env';
 import { brief } from '../Brief';
-import { ViewBase, ViewEvent, ViewState, ViewType } from './ViewBase';
+import { ViewBase, ViewEvent, ViewState } from './ViewBase';
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /** 视图数据 */
@@ -396,20 +396,20 @@ export class ViewManager extends Component {
             if (viewPrefab == null) continue;
             let viewBase: ViewBase = viewPrefab.data.getComponent(ViewBase);
             if (viewBase && viewBase.isDefault) {
-                if (viewBase.viewType == ViewType.View) {
+                if (viewBase.viewType == ViewBase.Type.View) {
                     this.defaultView = viewBase.viewName;
                 }
-                else if (viewBase.viewType == ViewType.Dialog) {
+                else if (viewBase.viewType == ViewBase.Type.Dialog) {
                     this.defaultDialog = viewBase.viewName;
                 }
-                else if (viewBase.viewType == ViewType.Tooltip) {
+                else if (viewBase.viewType == ViewBase.Type.Tooltip) {
                     this.defaultTooltip = viewBase.viewName;
                 }
             }
         }
     }
 
-    private getDefaultName(viewType: ViewType): string {
+    private getDefaultName(viewType): string {
         for (let data of this.viewTemplateMap.values()) {
             if (data.viewBase.viewType === viewType && data.viewBase.isDefault) {
                 return data.viewBase.viewName;
@@ -486,7 +486,7 @@ export class ViewManager extends Component {
      * @param name 视图名称
      * @returns 视图类型
      */
-    getViewType(name: string): ViewType | null {
+    getViewType(name: string) {
         let viewData = this.viewTemplateMap.get(name);
         if (viewData) {
             return viewData.viewBase.viewType;
@@ -525,7 +525,7 @@ export class ViewManager extends Component {
      * @param node 视图节点
      * @param type 视图类型
      */
-    setViewNode(name: string, node: Node, type: ViewType = ViewType.View) {
+    setViewNode(name: string, node: Node, type = ViewBase.Type.View) {
         let viewBase = node.getComponent(ViewBase);
         if (!viewBase) {
             viewBase = node.addComponent(ViewBase);
@@ -545,13 +545,13 @@ export class ViewManager extends Component {
         let viewType = this.getViewType(name);
         if (viewType == null) return;
         switch (viewType) {
-            case ViewType.View:
+            case ViewBase.Type.View:
                 this.showView(name, data);
                 break;
-            case ViewType.Dialog:
+            case ViewBase.Type.Dialog:
                 this.showDialog(name, data);
                 break;
-            case ViewType.Tooltip:
+            case ViewBase.Type.Tooltip:
                 this.showTooltip(name, data);
                 break;
             default:
@@ -568,13 +568,13 @@ export class ViewManager extends Component {
         let viewType = this.getViewType(name);
         if (viewType == null) return;
         switch (viewType) {
-            case ViewType.View:
+            case ViewBase.Type.View:
                 this.closeView(name, data);
                 break;
-            case ViewType.Dialog:
+            case ViewBase.Type.Dialog:
                 this.closeDialog(name, data);
                 break;
-            case ViewType.Tooltip:
+            case ViewBase.Type.Tooltip:
                 this.closeTooltip(name, data);
                 break;
             default:
@@ -588,7 +588,7 @@ export class ViewManager extends Component {
      * @param data 数据
      */
     showView(name?: string, data?: any): void {
-        if (!name) name = this.getDefaultName(ViewType.View);
+        if (!name) name = this.getDefaultName(ViewBase.Type.View);
         if (!name) return;
 
         // 使用延迟，防止在onLoad中调用
@@ -668,7 +668,7 @@ export class ViewManager extends Component {
      * @param data 数据
      */
     showDialog(name?: string, data?: any): void {
-        if (!name) name = this.getDefaultName(ViewType.Dialog);
+        if (!name) name = this.getDefaultName(ViewBase.Type.Dialog);
         if (!name) return;
 
         // 如果已经存在，则不再创建
@@ -689,7 +689,7 @@ export class ViewManager extends Component {
      * @param data 数据
      */
     closeDialog(name?: string, data?: any): void {
-        if (!name) name = this.getDefaultName(ViewType.Dialog);
+        if (!name) name = this.getDefaultName(ViewBase.Type.Dialog);
         if (!name) return;
 
         let viewData = this.dialogList.getViewData(name);
@@ -704,7 +704,7 @@ export class ViewManager extends Component {
      * @param data 数据
      */
     showTooltip(name?: string, data?: any): void {
-        if (!name) name = this.getDefaultName(ViewType.Tooltip);
+        if (!name) name = this.getDefaultName(ViewBase.Type.Tooltip);
         if (!name) return;
 
         // 重复提示框，重新设置数据
@@ -728,7 +728,7 @@ export class ViewManager extends Component {
      * @param data 数据
      */
     closeTooltip(name?: string, data?: any): void {
-        if (!name) name = this.getDefaultName(ViewType.Tooltip);
+        if (!name) name = this.getDefaultName(ViewBase.Type.Tooltip);
         if (!name) return;
 
         let viewData = this.tooltipList.getViewData(name);

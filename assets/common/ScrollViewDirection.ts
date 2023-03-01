@@ -6,7 +6,7 @@
  */
 
 /** ScrollView方向类型 */
-export enum ScrollViewDirectionType {
+enum ScrollViewDirectionEnum {
     /** 水平方向 */
     HORIZONTAL = 0,
     /** 垂直方向 */
@@ -22,18 +22,21 @@ const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 @menu('Brief/Common/ScrollViewDirection')
 export class ScrollViewDirection extends Component {
 
+    /** ScrollView方向类型 */
+    static Direction = ScrollViewDirectionEnum;
+
     @property({
-        type: Enum(ScrollViewDirectionType),
+        type: Enum(ScrollViewDirectionEnum),
     })
-    private _type: ScrollViewDirectionType = ScrollViewDirectionType.VERTICAL;
+    private _type: ScrollViewDirectionEnum = ScrollViewDirectionEnum.VERTICAL;
     @property({
-        type: Enum(ScrollViewDirectionType),
+        type: Enum(ScrollViewDirectionEnum),
         tooltip: '滚动视图方向',
     })
-    get type(): ScrollViewDirectionType {
+    get type(): ScrollViewDirectionEnum {
         return this._type;
     }
-    set type(value: ScrollViewDirectionType) {
+    set type(value: ScrollViewDirectionEnum) {
         this._type = value;
         this.autoAdjustDirection();
     }
@@ -142,7 +145,7 @@ export class ScrollViewDirection extends Component {
         let barTransform = this.bar.getComponent(UITransform);
         let contentTransform = this.content.getComponent(UITransform);
         let viewTransform = this.view.getComponent(UITransform);
-        if (this.type == ScrollViewDirectionType.VERTICAL) {
+        if (this.type == ScrollViewDirectionEnum.VERTICAL) {
             this.scrollView.horizontal = false;
             this.scrollView.horizontalScrollBar = null;
             this.scrollView.vertical = true;
@@ -205,7 +208,7 @@ export class ScrollViewDirection extends Component {
     }
 
     private autoAdjustItemPosition(content: Node, items: readonly Node[]) {
-        if (this.type == ScrollViewDirectionType.VERTICAL) {
+        if (this.type == ScrollViewDirectionEnum.VERTICAL) {
             let topY = 0;
             for (let i = 0; i < items.length; i++) {
                 let item = items[i];

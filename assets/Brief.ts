@@ -1,5 +1,4 @@
 import { EventTarget } from 'cc';
-
 import { AudioManager } from "./common/AudioManager";
 import { MessageBox } from "./common/MessageBox";
 import { Tooltip } from "./common/Tooltip";
@@ -12,7 +11,7 @@ import { SkinManager } from "./expand/SkinSprite";
 import { GuideManager } from "./guide/GuideManager";
 import { DataTarget } from "./common/DataTarget";
 
-/** brief cocos 模块便捷访问入口 */
+/** brief 模块便捷访问入口 */
 export class brief {
 
     /** 

@@ -8,7 +8,7 @@
 import { ViewManager } from "./ViewManager";
 
 /** 消息框按钮 */
-export const enum MessageBoxButtons {
+enum MessageBoxButtons {
     /* 消息框无按钮。 */
     None = 0,
     /* 消息框包含“确定”按钮。 */
@@ -22,7 +22,7 @@ export const enum MessageBoxButtons {
 }
 
 /** 消息框结果 */
-export const enum MessageBoxResult {
+enum MessageBoxResult {
     /** Nothing */
     None = 0,
     /** 确定 */
@@ -54,6 +54,14 @@ export type MessageBoxData = {
 
 /** 消息框 */
 export class MessageBox {
+    /** 按钮类型 */
+    static Buttons = MessageBoxButtons;
+
+    /** 消息框结果 */
+    static Result = MessageBoxResult;
+
+    static Data: MessageBoxData;
+
     /**
      * 显示对话框
      * @param content 消息内容 

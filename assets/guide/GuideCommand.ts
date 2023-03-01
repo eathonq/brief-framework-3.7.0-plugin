@@ -10,7 +10,7 @@ import { Locator } from "../common/Locator";
 import { ViewManager } from "../common/ViewManager";
 
 //#region Guide Data
-export type ClickCommandData = {
+type ClickCommandData = {
     /** 
      * 按钮地址
      * @example
@@ -20,7 +20,7 @@ export type ClickCommandData = {
     path: string;
 }
 
-export type TooltipCommandData = {
+type TooltipCommandData = {
     /** 提示窗显示内容 */
     content: string;
     /** 提示窗名称（类型） */

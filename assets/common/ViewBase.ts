@@ -9,16 +9,6 @@ import { _decorator, Component, Node, Enum, EventTouch, Label } from "cc";
 import { EDITOR } from "cc/env";
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
-/** 视图类型 */
-export enum ViewType {
-    /** 全屏视图 */
-    View = 0,
-    /** Dialog */
-    Dialog = 1,
-    /** 提示框 */
-    Tooltip = 2,
-}
-
 /**
  * @example
  * protected onLoad() {
@@ -27,8 +17,6 @@ export enum ViewType {
  *         // TODO
  *     }, this);
  * }
- * // 通知视图事件
- * ViewManager.instance.show("ViewName", data);
  */
 export const ViewEvent = "VIEW_EVENT";
 
@@ -44,12 +32,25 @@ export enum ViewState {
     Data = 3,
 }
 
+/** 视图类型 */
+enum ViewType {
+    /** 全屏视图 */
+    View = 0,
+    /** Dialog */
+    Dialog = 1,
+    /** 提示框 */
+    Tooltip = 2,
+}
+
 /** 视图基类 */
 @ccclass('brief.ViewBase')
 @help('https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/common/viewbase')
 @executeInEditMode
 @menu('Brief/Common/ViewBase')
 export class ViewBase extends Component {
+
+    /** 视图类型 */
+    static Type = ViewType;
 
     @property({
         tooltip: "视图名称",
@@ -94,8 +95,9 @@ export class ViewBase extends Component {
     //#endregion
 
     protected onLoad() {
-        if(EDITOR){
+        if (EDITOR) {
             this.checkEditorComponent();
+            return;
         }
     }
 
