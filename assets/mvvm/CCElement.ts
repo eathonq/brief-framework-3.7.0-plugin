@@ -81,8 +81,9 @@ const NODE_ELEMENT: Element[] = [
 export class CCElement extends Component {
 
     @property
-    protected _elementName = "";
+    protected _elementName = ""; // 挂载 @property 属性值保存到场景等资源文件中，用于 binding 数据恢复
     private _elementEnums: { name: string, value: number }[] = [];
+
     private _bindingElement = 0;
     /** 绑定元素的名字 */
     @property({
@@ -162,14 +163,12 @@ export class CCElement extends Component {
     private updateEditorElementEnums() {
         const newEnums = [];
         if (this._identifyList.length > 0) {
-            let count = 0;
             for (let i = 0; i < this._identifyList.length; i++) {
                 const element = this._identifyList[i];
-                newEnums.push({ name: element.component.name, value: count++ });
-                count++;
+                newEnums.push({ name: element.component.name, value: i });
             }
         }
-
+        
         this._elementEnums = newEnums;
         CCClass.Attr.setClassAttr(this, 'bindingElement', 'enumList', newEnums);
 

@@ -2,7 +2,7 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-02-15 18:45
+ * update = 2023-03-02 09:29
  */
 
 //#region Decorator
@@ -21,6 +21,8 @@ type class_info = {
     temp: any,
     /** 是否在编辑器阶段设置为默认值 */
     isSetDefaultInEditor: boolean,
+    /** 是否全局 */
+    isGlobal: boolean,
 }
 
 /** 装饰器数据种类枚举 */
@@ -66,7 +68,6 @@ function toDataKind(constructor: any) {
 
 /** 装饰器数据 */
 class DecoratorData {
-
     /**
      * 装饰器类数据信息
      * @param key: 类名
@@ -87,7 +88,15 @@ class DecoratorData {
     private getInfo(className: string) {
         let info = this._classInfoMap.get(className);
         if (!info) {
-            info = { property: [], data_type: {}, data_kind: {}, function: [], temp: null, isSetDefaultInEditor: false };
+            info = {
+                property: [],
+                data_type: {},
+                data_kind: {},
+                function: [],
+                temp: null,
+                isSetDefaultInEditor: false,
+                isGlobal: false,
+            };
             this._classInfoMap.set(className, info);
         }
         return info;
@@ -97,11 +106,13 @@ class DecoratorData {
      * 标记类
      * @param className 目标类名 
      * @param temp 临时数据
+     * @param isGlobal 是否全局
      */
-    markClass(className: string, temp: any) {
+    markClass(className: string, temp: any, isGlobal: boolean) {
         let info = this.getInfo(className);
         info.temp = temp;
         info.isSetDefaultInEditor = false;
+        info.isGlobal = isGlobal;
 
         // 没有指定类型的属性，使用默认值的类型
         for (let key in info.data_kind) {
@@ -114,6 +125,61 @@ class DecoratorData {
                 info.data_kind[key] = toDataKind(temp[key].constructor);
             }
         }
+    }
+
+    /**
+     * 获取标记了类的ViewModel列表
+     * @param view 视图名称, 用于排序
+     * @returns 
+     */
+    getViewModelList(view: string) {
+        let oo_vm_list: {
+            /** ViewModel名称 */
+            name: string;
+        }[] = [];
+        // 遍历所有的ViewModel
+        for (let [key, value] of this._classInfoMap) {
+            // 判断 key 是否以 "ViewModel" 结尾
+            if (key.endsWith("ViewModel")) {
+                // 判断名称是否包含 view
+                if (key.includes(view) || value.isGlobal) {
+                    oo_vm_list.push({ name: key });
+                }
+            }
+        }
+        if (view.endsWith("View")) {
+            // 排序，如果名称包含 view，则放在前面
+            oo_vm_list.sort((a, b) => {
+                if (a.name.includes(view) && !b.name.includes(view)) {
+                    return -1;
+                }
+                else if (!a.name.includes(view) && b.name.includes(view)) {
+                    return 1;
+                }
+                else {
+                    return 0;
+                }
+            });
+        }
+        return oo_vm_list;
+    }
+
+    /**
+     * 获取标记了类的Model列表
+     * @param className 
+     * @returns 
+     */
+    createViewModel(className: string) {
+        let info = this._classInfoMap.get(className);
+        if (info) {
+            if (info.isGlobal) {
+                return info.temp;
+            }
+            else {
+                return new info.temp.constructor();
+            }
+        }
+        return null;
     }
 
     /**
@@ -248,8 +314,17 @@ export const decoratorData = new DecoratorData();
 
 //#endregion
 
-//#region oop
+//#region editor
+/**
+ * 设置编辑状态下的默认值
+ * @param data 临时数据
+ */
+export function editor(data: any) {
+    decoratorData.setDefaultInEditor(data);
+}
+//#endregion
 
+//#region oop
 function is_array_type(type: any): type is Array<any> {
     return type instanceof Array;
 }
@@ -283,10 +358,10 @@ export function oop(...args: any[]) {
             let type = "";
             if (arg_0) {
                 kind = toDataKind(arg_0);
-                if(kind == DataKind.Array){
+                if (kind == DataKind.Array) {
                     type = arg_0[0] ? arg_0[0].name : target.constructor.name;  // 自己的类型
                 }
-                else{
+                else {
                     type = arg_0.name;
                 }
             }
@@ -309,11 +384,9 @@ export function oop(...args: any[]) {
         decoratorData.markProperty(tag, key, "unknown", DataKind.Unknown);
     }
 }
-
 //#endregion
 
 //#region oof
-
 /**
  * mvvm 方法装饰器
  */
@@ -325,15 +398,35 @@ export function oof(target: any, key: string, descriptor: PropertyDescriptor) {
     }
     decoratorData.markFunction(tag, key);
 }
+//#endregion
 
-
+//#region ooc
+/**
+ * 类装饰器
+ * @param isGlobal 是否全局数据，默认为 false
+ * @example
+ * _@ooc(true) // 全局数据
+ * export class MyClass {} 
+ */
+export function ooc(isGlobal: boolean): any;
 /**
  * 类装饰器
  * @example
  * _@ooc
  * export class MyClass {}
  */
-export function ooc(constructor: any): void {
-    decoratorData.markClass(constructor.name, new constructor());
+export function ooc(constructor: any): void;
+export function ooc(...args: any[]) {
+    if (args.length == 1) {
+        let arg_0 = args[0];
+        if (typeof arg_0 == "boolean") {
+            return function (constructor: any) {
+                decoratorData.markClass(constructor.name, new constructor(), arg_0);
+            }
+        }
+        else {
+            decoratorData.markClass(arg_0.name, new arg_0(), false);
+        }
+    }
 }
 //#endregion

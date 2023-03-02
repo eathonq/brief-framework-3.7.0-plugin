@@ -47,6 +47,9 @@ export class DataContext extends Component {
         tooltip: '数据上下文',
         displayName: 'DataContext',
         readonly: true,
+        visible() {
+            return !this._isRoot;
+        },
     })
     get parent() {
         return this._parent;
@@ -115,7 +118,7 @@ export class DataContext extends Component {
     //#region EDITOR
     onRestore() {
         if (this._isRoot) return;
-        this.checkEditorComponent();
+        this.checkEditorComponent();        
     }
 
     protected checkEditorComponent() {
