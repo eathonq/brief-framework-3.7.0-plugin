@@ -139,7 +139,7 @@ export namespace mvvm {
      * @param view 指定视图名称
      * @returns 视图模型数据
      */
-    export function getViewModelWithName(name: string, view?: string): any {
+    export function viewModelWithName(name: string, view?: string): any {
         return viewModelManager.getWithName(name, view);
     }
 
@@ -149,7 +149,7 @@ export namespace mvvm {
      * @param view 指定视图名称
      * @returns 视图模型数据
      */
-    export function getViewModel<T>(constructor: any, view?: string): T {
+    export function viewModel<T>(constructor: { new(): T; }, view?: string): T {
         return viewModelManager.get(constructor, view);
     }
 }

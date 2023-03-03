@@ -174,7 +174,7 @@ class ViewModelManager {
      * @param view 指定视图名称
      * @returns 
      */
-    get<T>(constructor: any, view?: string): T {
+    get<T>(constructor: { new(): T; }, view?: string): T {
         let name = constructor.name;
         let list = this._dataMap.get(name);
         if (!list) return null;
