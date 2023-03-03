@@ -233,7 +233,7 @@ export class AudioManager extends Component {
         if (this._switchSound) {
             let audioClip = await this.getOrCreateAudioClip(path);
             if (audioClip) {
-                this._oneShotAudioSource.playOneShot(audioClip, volumeScale | this._volumeSound);
+                this._oneShotAudioSource.playOneShot(audioClip, volumeScale || this._volumeSound);
             }
         }
     }
@@ -259,7 +259,7 @@ export class AudioManager extends Component {
         let soundId = ++this._soundIdCounter;
         let item = this.createSoundAudioSource(soundId, onStop);
         item.clip = await this.getOrCreateAudioClip(path);
-        item.volume = volumeScale | this._volumeSound;
+        item.volume = volumeScale || this._volumeSound;
         item.loop = loop;
         item.play();
         this._playEventMutex.notify();

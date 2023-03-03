@@ -10,7 +10,8 @@ import { EDITOR } from 'cc/env';
 import { observe, reactive, unobserve } from '../base/ReactiveObserve';
 import { Locator } from '../common/Locator';
 import { DataContext } from "./DataContext";
-import { decoratorData, DataKind } from './MVVM';
+import { DataKind, decoratorData } from './DecoratorData';
+
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /** 

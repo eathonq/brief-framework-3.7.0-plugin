@@ -10,7 +10,8 @@ import { EDITOR } from "cc/env";
 import { reactive } from "../base/ReactiveObserve";
 import { Locator } from "../common/Locator";
 import { DataContext } from "./DataContext";
-import { decoratorData } from './MVVM';
+import { decoratorData } from "./DecoratorData";
+
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 @ccclass("brief.ViewModel")
@@ -101,12 +102,92 @@ export class ViewModel extends DataContext {
 
         if (EDITOR) return;
 
-        let data = decoratorData.createViewModel(this._viewModelName);
+        let data = viewModelManager.add(this._viewModelName, this.constructor.name);
         if (!data) {
             console.error(`ViewModel: ${this.constructor.name} onLoad data is null`);
             return;
         }
 
-        this._data = reactive(data);
+        this._data = data;
+        this._data.onLoad?.call(this._data);
+    }
+
+    protected onDestroy() {
+        super.onDestroy();
+        if (EDITOR) return;
+
+        if (this._data) {
+            this._data.onDestroy?.call(this._data);
+            this._data = null;
+            viewModelManager.remove(this._viewModelName, this.constructor.name);
+        }
     }
 }
+
+class ViewModelManager {
+    private _dataMap: Map<string, { v: string, vm: any }[]> = new Map();
+
+    add(name: string, v: string) {
+        let vm = decoratorData.createViewModel(name);
+        if (!vm) return null;
+
+        let list = this._dataMap.get(name);
+        if (!list) {
+            list = [];
+            this._dataMap.set(name, list);
+        }
+        let data = reactive(vm);
+        list.push({ v, vm: data });
+        return data;
+    }
+
+    remove(name: string, v: string) {
+        let list = this._dataMap.get(name);
+        if (!list) return;
+        let index = list.findIndex(item => item.v == v);
+        if (index < 0) return;
+        list.splice(index, 1);
+    }
+
+    /**
+     * 获取视图模型数据
+     * @param name 视图模型
+     * @param view 指定视图名称
+     * @returns 
+     */
+    getWithName(name: string, view?: string): any {
+        let list = this._dataMap.get(name);
+        if (!list) return null;
+        if (!view) {
+            return list[0].vm;
+        }
+        else {
+            let item = list.find(item => item.v == view);
+            if (!item) return null;
+            return item.vm;
+        }
+    }
+
+    /**
+     * 获取视图模型数据
+     * @param constructor 视图模型构造函数
+     * @param view 指定视图名称
+     * @returns 
+     */
+    get<T>(constructor: any, view?: string): T {
+        let name = constructor.name;
+        let list = this._dataMap.get(name);
+        if (!list) return null;
+        if (!view) {
+            return list[0].vm as T;
+        }
+        else {
+            let item = list.find(item => item.v == view);
+            if (!item) return null;
+            return item.vm as T;
+        }
+    }
+}
+
+/** 视图模型管理器 */
+export const viewModelManager = new ViewModelManager();

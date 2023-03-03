@@ -11,7 +11,8 @@ import { observe, unobserve } from '../base/ReactiveObserve';
 import { Locator } from '../common/Locator';
 import { CCElement } from './CCElement';
 import { DataContext } from "./DataContext";
-import { decoratorData } from './MVVM';
+import { decoratorData } from './DecoratorData';
+
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
 /** 绑定模式 */

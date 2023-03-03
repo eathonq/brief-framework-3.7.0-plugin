@@ -8,7 +8,8 @@
 import { _decorator, Component, Node, Label, RichText, EditBox, Toggle, Button, Slider, ProgressBar, PageView, Sprite, ToggleContainer, Enum, CCClass, EventHandler } from 'cc';
 import { EDITOR } from 'cc/env';
 import { ResourcesUtil } from '../common/ResourcesUtil';
-import { DataKind } from './MVVM';
+import { DataKind } from './DecoratorData';
+
 const { ccclass, property, executeInEditMode } = _decorator;
 
 type ElementBinding = {
