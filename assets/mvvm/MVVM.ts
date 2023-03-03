@@ -13,21 +13,15 @@ import { viewModelManager } from "./ViewModel";
  * mvvm ViewModel 装饰器（请以 ViewModel 结尾）
  * @param isGlobal 是否全局数据，默认为 false
  * @example
- * ```ts
- * // define view model
- * @vm(true) // 全局数据
+ * *@vm(true)* // 全局数据
  * class MyViewModel {}
- * ```
  */
 export function vm(isGlobal: boolean): any;
 /**
  * mvvm ViewModel 装饰器（请以 ViewModel 结尾）
  * @example
- * ```ts
- * // define view model
- * @vm
+ * *@vm*
  * class MyViewModel {}
- * ```
  */
 export function vm(constructor: any): void;
 export function vm(...args: any[]) {
@@ -50,29 +44,21 @@ export function vm(...args: any[]) {
  * mvvm 属性装饰器
  * @param type 属性对象类型
  * @example
- * ```ts
- * // define property
- * @prop // 标记属性（有默认值属性使用）
+ * *@prop* // 标记属性（有默认值属性使用）
  * str = "hello";
  * 
- * // define property with type
- * @prop(TypeClass) // 标记属性（没有默认值属性使用）
+ * *@prop(TypeClass)* // 标记属性（没有默认值属性使用）
  * obj = null;
- * ```
  */
 export function prop(type: any): any;
 /**
  * mvvm 属性装饰器
  * @example
- * ```ts
- * // define property
- * @prop // 标记属性（有默认值属性使用）
+ * *@prop* // 标记属性（有默认值属性使用）
  * str = "hello";
  * 
- * // define property with type
- * @prop(TypeClass) // 标记属性（没有默认值属性使用）
+ * *@prop(TypeClass)* // 标记属性（没有默认值属性使用）
  * obj = null;
- * ```
  */
 export function prop(target: any, key?: string): void;
 export function prop(...args: any[]) {
