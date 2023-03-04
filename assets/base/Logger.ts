@@ -215,6 +215,31 @@ class Logger {
         }
         return `[${tag}]`;
     }
+
+    /**
+     * 获取调用栈信息
+     * @param level 查看层级，默认为2，即调用该方法的上一层
+     * @param separator 分隔符，默认为" -> "
+     * @returns 返回调用栈层级信息
+     */
+    static stack(level: number = 2, separator: string = " -> ") {
+        let stack = new Error().stack;
+        let arr = stack.split("\n");
+        let result = [];
+        for (let i = 0; i < arr.length; i++) {
+            let arr_0 = arr[i].split("at ");
+            if (arr_0.length > 1) {
+                let arr_1 = arr_0[1].split(" ");
+                if (arr_1.length > 0) {
+                    result.push(arr_1[0]);
+                }
+            }
+        }
+    
+        let s = result.slice(1, level + 1).join(separator);
+    
+        return s;
+    }
 }
 
 /**

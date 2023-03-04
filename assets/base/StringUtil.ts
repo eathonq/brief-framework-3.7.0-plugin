@@ -307,4 +307,4 @@ export class StringUtil {
 }
 
 /** 字符串格式化 */
-export let format = StringUtil.format;
+export const format = StringUtil.format;
