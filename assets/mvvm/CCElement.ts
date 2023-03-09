@@ -68,7 +68,11 @@ const COMP_ELEMENT: Element[] = [
 const NODE_ELEMENT: Element[] = [
     {
         component: Node,
-        binding: [{ name: 'active', kind: [DataKind.Boolean] }]
+        binding: [
+            { name: 'active', kind: [DataKind.Boolean] },
+            { name: 'pos x', kind: [DataKind.Number] },
+            { name: 'pos y', kind: [DataKind.Number] },
+        ]
     }
 ];
 
@@ -104,7 +108,7 @@ export class CCElement extends Component {
     }
 
     @property
-    private _propertyName = "";
+    protected _propertyName = "";
     private _propertyEnums: { name: string, value: number }[] = [];
     private _bindingProperty = 0;
     /** 组件上需要监听的属性 */
@@ -149,6 +153,7 @@ export class CCElement extends Component {
         this.updateEditorElementEnums();
     }
 
+    /** 识别到的组件列表 */
     private _identifyList: Element[] = [];
     private identifyComponent() {
         this._identifyList = [];
@@ -157,7 +162,7 @@ export class CCElement extends Component {
                 this._identifyList.push(COMP_ELEMENT[i]);
             }
         }
-
+        // 添加节点（默认Node）组件
         this._identifyList = this._identifyList.concat(NODE_ELEMENT);
     }
 
@@ -169,7 +174,7 @@ export class CCElement extends Component {
                 newEnums.push({ name: element.component.name, value: i });
             }
         }
-        
+
         this._elementEnums = newEnums;
         CCClass.Attr.setClassAttr(this, 'bindingElement', 'enumList', newEnums);
 
@@ -182,18 +187,6 @@ export class CCElement extends Component {
             }
         }
         this.bindingElement = 0;
-    }
-
-    private updateEditorPropertyTypes() {
-        if (this._identifyList.length > 0) {
-            const element = this._identifyList[this._bindingElement];
-            if (element) {
-                const property = element.binding[this._bindingProperty];
-                if (property) {
-                    this._elementKinds = property.kind;
-                }
-            }
-        }
     }
 
     private updateEditorPropertyEnums() {
@@ -222,12 +215,18 @@ export class CCElement extends Component {
     }
 
     private selectedComponent() {
-        this.updateEditorPropertyTypes(); // 需要先执行
         this.updateEditorPropertyEnums();
     }
 
     protected selectedProperty() {
         // TODO
+        const element = this._identifyList[this._bindingElement];
+        if (element) {
+            this._elementKinds = element.binding[this._bindingProperty].kind;
+        }
+        else {
+            this._elementKinds = [];
+        }
     }
     //#endregion
 
@@ -280,7 +279,8 @@ export class CCElement extends Component {
                 }
                 break;
             case Node.name:
-                this.node.active = value !== false;
+                //this.node.active = value !== false;
+                this.setNodeValue(value);
                 break;
         }
     }
@@ -330,9 +330,10 @@ export class CCElement extends Component {
                 container.checkEvents.push(containerEventHandler);
                 break;
             case Node.name:
-                this.node.on(Node.EventType.ACTIVE_IN_HIERARCHY_CHANGED, () => {
-                    this._elementValueChange?.(this.node.active);
-                }, this);
+                // this.node.on(Node.EventType.ACTIVE_IN_HIERARCHY_CHANGED, () => {
+                //     this._elementValueChange?.(this.node.active);
+                // }, this);
+                this.onNodeCallback();
                 break;
         }
     }
@@ -345,4 +346,34 @@ export class CCElement extends Component {
         let index = parent.children.indexOf(event.node);
         this._elementValueChange?.(index);
     }
+
+    //#region Node get set value
+    private setNodeValue(value: any) {
+        switch (this._propertyName) {
+            case 'active':
+                this.node.active = value !== false;
+                break;
+            case 'pos x':
+                let pos = this.node.position;
+                pos.set(value, pos.y);
+                this.node.position = pos;
+                break;
+            case 'pos y':
+                pos = this.node.position;
+                pos.set(pos.x, value);
+                this.node.position = pos;
+                break;
+        }
+    }
+
+    private onNodeCallback() {
+        switch (this._propertyName) {
+            case 'active':
+                this.node.on(Node.EventType.ACTIVE_IN_HIERARCHY_CHANGED, () => {
+                    this._elementValueChange?.(this.node.active);
+                }, this);
+                break;
+        }
+    }
+    //#endregion
 }

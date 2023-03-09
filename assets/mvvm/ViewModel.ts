@@ -14,6 +14,15 @@ import { decoratorData } from "./DecoratorData";
 
 const { ccclass, help, executeInEditMode, menu, property } = _decorator;
 
+export interface IViewModelCallback {
+    /** 加载完成回调 */
+    onLoad?: () => void;
+    /** 销毁回调 */
+    onDestroy?: () => void;
+    /** 更新回调 */
+    onUpdate?: (dt: number) => void;
+}
+
 @ccclass("brief.ViewModel")
 @help("https://vangagh.gitbook.io/brief-framework-3.7.0/gong-neng-jie-shao/mvvm/viewmodel")
 @executeInEditMode
@@ -121,6 +130,12 @@ export class ViewModel extends DataContext {
             this._data = null;
             viewModelManager.remove(this._viewModelName, this.constructor.name);
         }
+    }
+
+    protected update(dt: number) {
+        if (EDITOR) return;
+
+        this._data.onUpdate?.call(this._data, dt);
     }
 }
 

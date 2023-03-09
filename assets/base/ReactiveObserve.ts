@@ -545,3 +545,24 @@ export function unobserve(reaction: ReactionFunction) {
     }
 }
 //#endregion
+
+/**
+ * 从数组中删除指定的元素
+ * @info 解决 splice 删除数组元素的问题
+ * @param array 
+ * @param item 
+ */
+export function removeArrayItem<T>(array: T[], item?: T) {
+    const index = array.indexOf(item);
+    if (index !== -1) {
+        // array.splice(index, 1);
+
+        // 自己实现splice
+        let temp = array[index];
+        for (let i = index; i < array.length - 1; i++) {
+            array[i] = array[i + 1];
+        }
+        array[array.length - 1] = temp;
+        array.pop();
+    }
+}

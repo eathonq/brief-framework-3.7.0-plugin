@@ -128,6 +128,8 @@ export class Binding extends CCElement {
     }
 
     protected selectedProperty() {
+        super.selectedProperty();
+
         // TODO
         if (!this._parent) return; // 上下文数据异常，则不继续执行
         this.updateEditorModeEnums();

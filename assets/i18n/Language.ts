@@ -117,6 +117,7 @@ export class Language extends Component {
         I18n.instance.setLanguageWithModel(this._defaultLanguage, this._model);
     }
     //#endregion
+    
     protected onLoad() {
         if (EDITOR){
             this.checkEditorComponent();

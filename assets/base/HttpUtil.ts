@@ -62,6 +62,15 @@ export let openLocalFile = (callback: (file: File) => void) => {
 // 参考
 // https://blog.csdn.net/grimraider/article/details/106378809
 
+/** Http 响应体 */
+interface HttpResponse {
+    /** 状态码（200表示成功） */
+    status: number;
+    /** 数据 */
+    body: string;
+}
+
+/** Http工具类 */
 export class HttpUtil {
 
     static isNative = false;
@@ -71,7 +80,7 @@ export class HttpUtil {
      * @param url 请求地址 
      * @param callback 回调函数
      */
-    static get(url: string, callback: (response: string, errStatus?: number) => void) {
+    static getWithCallback(url: string, callback: (res: HttpResponse) => void) {
         let xhr = new XMLHttpRequest();
         xhr.open("GET", url, true);
         // xhr.onprogress = function () {
@@ -95,10 +104,10 @@ export class HttpUtil {
             // 500: "Internal Server Error"
 
             if (xhr.readyState == 4 && xhr.status == 200) {
-                callback(xhr.responseText);
+                callback({ body: xhr.responseText, status: xhr.status });
             }
             else if (xhr.status != 200) {
-                callback(xhr.responseText, xhr.status);
+                callback({ body: xhr.responseText, status: xhr.status });
             }
         }
         xhr.timeout = 5000;
@@ -111,7 +120,7 @@ export class HttpUtil {
      * @param data 请求数据, 'a=1&b=2&c=3' 或者 {a:1, b:2, c:3}
      * @param callback 回调函数
      */
-    static post(url: string, data: string | object, callback: (response: string, errStatus?: number) => void) {
+    static postWithCallback(url: string, data: string | object, callback: (res: HttpResponse) => void) {
         let xhr = new XMLHttpRequest();
         xhr.open("POST", url, true);
         // https://developer.mozilla.org/zh-CN/docs/Web/HTTP/CORS
@@ -124,10 +133,10 @@ export class HttpUtil {
         }
         xhr.onreadystatechange = function () {
             if (xhr.readyState == 4 && xhr.status == 200) {
-                callback(xhr.responseText);
+                callback({ body: xhr.responseText, status: xhr.status });
             }
             else if (xhr.status != 200) {
-                callback(xhr.responseText, xhr.status);
+                callback({ body: xhr.responseText, status: xhr.status });
             }
         }
         xhr.timeout = 5000;
@@ -146,15 +155,15 @@ export class HttpUtil {
      * @param file 文件
      * @param callback 回调函数
      */
-    static upload(url: string, file: File, callback: (response: string, errStatus?: number) => void) {
+    static uploadWithCallback(url: string, file: File, callback: (res: HttpResponse) => void) {
         let xhr = new XMLHttpRequest();
         xhr.open("POST", url, true);
         xhr.onreadystatechange = function () {
             if (xhr.readyState == 4 && xhr.status == 200) {
-                callback(xhr.responseText);
+                callback({ body: xhr.responseText, status: xhr.status });
             }
             else if (xhr.status != 200) {
-                callback(xhr.responseText, xhr.status);
+                callback({ body: xhr.responseText, status: xhr.status });
             }
         }
 
@@ -164,62 +173,21 @@ export class HttpUtil {
     }
 
     /**
-     * get请求
-     * @param url 请求地址 
-     * @returns Promise<{ response: string, errStatus?: number }>
-     */
-    static async getAsync(url: string) {
-        return new Promise<{ response: string, errStatus?: number }>((resolve, reject) => {
-            this.get(url, (response: string, errStatus?: number) => {
-                resolve({ response, errStatus });
-            });
-        });
-    }
-
-    /**
-     * post请求
-     * @param url 请求地址
-     * @param data 请求数据, 'a=1&b=2&c=3' 或者 {a:1, b:2, c:3}
-     * @returns Promise<{ response: string, errStatus?: number }>
-     */
-    static async postAsync(url: string, data: string | object) {
-        return new Promise<{ response: string, errStatus?: number }>((resolve, reject) => {
-            this.post(url, data, (response: string, errStatus?: number) => {
-                resolve({ response, errStatus });
-            });
-        });
-    }
-
-    /**
-     * 文件上传
-     * @param url 请求地址
-     * @param file 文件
-     * @returns Promise<{ response: string, errStatus?: number }>
-     */
-    static async uploadAsync(url: string, file: File) {
-        return new Promise<{ response: string, errStatus?: number }>((resolve, reject) => {
-            this.upload(url, file, (response: string, errStatus?: number) => {
-                resolve({ response, errStatus });
-            });
-        });
-    }
-
-    /**
      * 下载文件
      * @param url 请求地址
      * @param callback 回调函数
      * @param responseType 返回类型
      */
-    static download(url: string, callback: (response: string, errStatus?: number) => void, responseType: XMLHttpRequestResponseType = "text") {
+    static downloadWithCallback(url: string, callback: (res: HttpResponse) => void, responseType: XMLHttpRequestResponseType = "text") {
         let xhr = new XMLHttpRequest();
         xhr.open("GET", url, true);
         xhr.responseType = responseType;
         xhr.onreadystatechange = function () {
             if (xhr.readyState == 4 && xhr.status == 200) {
-                callback(xhr.response);
+                callback({ body: xhr.response, status: xhr.status });
             }
             else if (xhr.status != 200) {
-                callback(xhr.response, xhr.status);
+                callback({ body: xhr.response, status: xhr.status });
             }
         }
         xhr.timeout = 5000;
@@ -227,64 +195,49 @@ export class HttpUtil {
     }
 
     /**
+     * get请求
+     * @param url 请求地址 
+     * @returns Promise<Response>
+     */
+    static async get(url: string) {
+        return new Promise<HttpResponse>((resolve) => {
+            this.getWithCallback(url, resolve);
+        });
+    }
+
+    /**
+     * post请求
+     * @param url 请求地址
+     * @param data 请求数据, 'a=1&b=2&c=3' 或者 {a:1, b:2, c:3}
+     * @returns Promise<Response>
+     */
+    static async post(url: string, data: string | object) {
+        return new Promise<HttpResponse>((resolve) => {
+            this.postWithCallback(url, data, resolve);
+        });
+    }
+
+    /**
+     * 文件上传
+     * @param url 请求地址
+     * @param file 文件
+     * @returns Promise<Response>
+     */
+    static async upload(url: string, file: File) {
+        return new Promise<HttpResponse>((resolve) => {
+            this.uploadWithCallback(url, file, resolve);
+        });
+    }
+
+    /**
      * 下载文件
      * @param url 请求地址
      * @param responseType 返回类型 
-     * @returns Promise<{ response: string, errStatus?: number }>
+     * @returns Promise<Response>
      */
-    static async downloadAsync(url: string, responseType: XMLHttpRequestResponseType = "text") {
-        return new Promise<{ response: string, errStatus?: number }>((resolve, reject) => {
-            this.download(url, (response: string, errStatus?: number) => {
-                resolve({ response, errStatus });
-            }, responseType);
+    static async download(url: string, responseType: XMLHttpRequestResponseType = "text") {
+        return new Promise<HttpResponse>((resolve) => {
+            this.downloadWithCallback(url, resolve, responseType);
         });
-    }
-}
-
-/**
- * websocket item
- */
-export class WebSocketItem {
-    private _ws: WebSocket;
-    private _url: string;
-    private _key: string;
-    get ws(): WebSocket {
-        return this._ws;
-    }
-    get url(): string {
-        return this._url;
-    }
-    get key(): string {
-        return this._key;
-    }
-    private _onMessage: (event: MessageEvent) => void;
-    private _onOpen: (event: Event) => void;
-    private _onClose: (event: Event) => void;
-    private _onError: (event: Event) => void;
-
-    constructor(url: string, key?: string) {
-        this._url = url;
-        this._key = key;
-    }
-
-    open(onOpen: (event: Event) => void, onClose: (event: Event) => void, onMessage: (event: MessageEvent) => void, onError: (event: Event) => void) {
-        this._onOpen = onOpen;
-        this._onClose = onClose;
-        this._onMessage = onMessage;
-        this._onError = onError;
-
-        this._ws = new WebSocket(this._url);
-        this._ws.onopen = this._onOpen;
-        this._ws.onclose = this._onClose;
-        this._ws.onmessage = this._onMessage;
-        this._ws.onerror = this._onError;
-    }
-
-    send(data: string) {
-        this._ws.send(data);
-    }
-
-    close() {
-        this._ws.close();
     }
 }
