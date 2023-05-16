@@ -2,7 +2,7 @@
  * brief-framework
  * author = vangagh@live.cn
  * editor = vangagh@live.cn
- * update = 2023-01-30 16:14
+ * update = 2023-04-19 16:54
  */
 
 /** 随机数工具 */
@@ -19,7 +19,7 @@ export class RandomUtil {
      * getRandom(1, 10, 2) // [1, 10] : 1 <= x <= 10
      * getRandom(1, 10, 3) // (1, 10] : 1 < x <= 10
      */
-    static getRandom(min: number, max: number, type = 2): number {
+    static random(min: number, max: number, type = 2): number {
         min = Math.ceil(min);
         max = Math.floor(max);
         switch (type) {
@@ -48,10 +48,10 @@ export class RandomUtil {
      * @param count 随机数个数
      * @returns number[]
      */
-    static getRandomList(min: number, max: number, count: number): number[] {
+    static randomList(min: number, max: number, count: number): number[] {
         var list: number[] = [];
         for (var i = 0; i < count; i++) {
-            list.push(this.getRandom(min, max));
+            list.push(this.random(min, max));
         }
         return list;
     }
@@ -64,40 +64,40 @@ export class RandomUtil {
      * @param max 最大值，默认sun，条件max >= sum / count
      * @returns number[]
      */
-    static getRandomListBySum(sum: number, count: number, min?: number, max?: number): number[] {
+    static randomListBySum(sum: number, count: number, min?: number, max?: number): number[] {
         // 最小值矫正
         min = min || 0;
-        if(min * count > sum) {
+        if (min * count > sum) {
             min = Math.floor(sum / count);
         }
         // 最大值矫正
         max = max || sum;
-        if(max * count < sum) {
+        if (max * count < sum) {
             max = Math.ceil(sum / count);
         }
-        
+
         let list: number[] = [];
         let residue = sum;
         let random = 0;
         let currentMin = 0;
         let currentMax = 0;
         for (let i = 0; i < count; i++) {
-            if(i == count - 1) {
+            if (i == count - 1) {
                 random = residue;
             } else {
                 // 最小值矫正
                 currentMin = Math.max(min, residue - max * (count - i - 1));
                 // 最大值矫正
                 currentMax = Math.min(max, residue - min * (count - i - 1));
-                random = this.getRandom(currentMin, currentMax);
+                random = this.random(currentMin, currentMax);
             }
             list.push(random);
             residue -= random;
         }
-        
+
         // 随机打乱
         for (let i = 0; i < count; i++) {
-            random = this.getRandom(0, count, 1);
+            random = this.random(0, count, 1);
             [list[i], list[random]] = [list[random], list[i]];
         }
 
@@ -105,19 +105,96 @@ export class RandomUtil {
     }
 
     /**
-     * 获取数组中的随机元素
-     * @param arr 数组
-     * @param count 随机元素个数
-     * @returns any[]
+     * 获取随机打乱的列表
+     * @param array 列表数据
+     * @returns 
      */
-    static getRandomArrayElements(arr: any[], count: number): any[] {
-        var shuffled = arr.slice(0), i = arr.length, min = i - count, temp: any, index: number;
-        while (i-- > min) {
-            index = Math.floor((i + 1) * Math.random());
-            temp = shuffled[index];
-            shuffled[index] = shuffled[i];
-            shuffled[i] = temp;
+    static randomArray(array: Array<any>): Array<any> {
+        let tmpArray = array.concat();
+        let resultArray = new Array<any>();
+        while (tmpArray.length > 0) {
+            let index = Math.floor(Math.random() * tmpArray.length);
+            resultArray.push(tmpArray[index]);
+            tmpArray.splice(index, 1);
         }
-        return shuffled.slice(min);
+        return resultArray;
+    }
+
+    /**
+     * 获取随机打乱的列表，指定个数
+     * @param array 列表数据
+     * @param count 指定个数
+     * @returns 
+     */
+    static randomArrayByCount(array: Array<any>, count: number): Array<any> {
+        let tmpArray = array.concat();
+        let resultArray = new Array<any>();
+        while (resultArray.length < count) {
+            let index = Math.floor(Math.random() * tmpArray.length);
+            resultArray.push(tmpArray[index]);
+            tmpArray.splice(index, 1);
+        }
+        return resultArray;
+    }
+
+    /**
+     * 获取随机打乱的列表，指定权重
+     * @param array 列表数据
+     * @param weightArray 权重列表
+     * @returns 
+     */
+    static randomArrayByWeight(array: Array<any>, weightArray: Array<number>): Array<any> {
+        let tmpArray = array.concat();
+        let resultArray = new Array<any>();
+        let weightSum = 0;
+        for (let i = 0; i < weightArray.length; ++i) {
+            weightSum += weightArray[i];
+        }
+        while (tmpArray.length > 0) {
+            let random = Math.random() * weightSum;
+            for (let i = 0; i < weightArray.length; ++i) {
+                if (random < weightArray[i]) {
+                    resultArray.push(tmpArray[i]);
+                    tmpArray.splice(i, 1);
+                    weightSum -= weightArray[i];
+                    weightArray.splice(i, 1);
+                    break;
+                } else {
+                    random -= weightArray[i];
+                }
+            }
+        }
+        return resultArray;
+    }
+
+    /**
+     * 获取随机打乱的列表，指定权重和个数
+     * @param array 列表数据
+     * @param weightArray 权重列表
+     * @param count 指定个数
+     * @returns
+     */
+    static randomArrayByWeightAndCount(array: Array<any>, weightArray: Array<number>, count: number): Array<any> {
+        let tmpArray = array.concat();
+        let resultArray = new Array<any>();
+        let weightSum = 0;
+        for (let i = 0; i < weightArray.length; ++i) {
+            weightSum += weightArray[i];
+        }
+        while (resultArray.length < count) {
+            let random = Math.random() * weightSum;
+            for (let i = 0; i < weightArray.length; ++i) {
+                if (random < weightArray[i]) {
+                    resultArray.push(tmpArray[i]);
+                    tmpArray.splice(i, 1);
+                    weightSum -= weightArray[i];
+                    weightArray.splice(i, 1);
+                    break;
+                } else {
+                    random -= weightArray[i];
+                }
+            }
+        }
+        return resultArray;
     }
 }

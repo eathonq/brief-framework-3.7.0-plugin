@@ -6,7 +6,6 @@
  */
 
 import { DataKind, decoratorData, toDataKind } from "./DecoratorData";
-import { viewModelManager } from "./ViewModel";
 
 //#region vm
 /**
@@ -131,25 +130,5 @@ export namespace mvvm {
      */
     export function editor(data: any) {
         decoratorData.setDefaultInEditor(data);
-    }
-
-    /** 
-     * 获取视图模型数据
-     * @param name 视图模型名称
-     * @param view 指定视图名称
-     * @returns 视图模型数据
-     */
-    export function viewModelWithName(name: string, view?: string): any {
-        return viewModelManager.getWithName(name, view);
-    }
-
-    /**
-     * 获取视图模型数据
-     * @param constructor 视图模型构造函数
-     * @param view 指定视图名称
-     * @returns 视图模型数据
-     */
-    export function viewModel<T>(constructor: { new(): T; }, view?: string): T {
-        return viewModelManager.get(constructor, view);
     }
 }

@@ -109,7 +109,7 @@ export class ResourcesUtil {
      * @param path json路径（不包含后缀，相对路径从resources子目录算起）
      * @returns Promise<any>
      */
-    static async getJson<T>(path: string): Promise<T> {
+    static async getJson<T = any>(path: string): Promise<T> {
         if (!path || path.trim() === '') return null;
 
         if (this._bundleName) {

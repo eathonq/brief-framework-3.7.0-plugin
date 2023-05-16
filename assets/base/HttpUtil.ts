@@ -197,7 +197,7 @@ export class HttpUtil {
     /**
      * get请求
      * @param url 请求地址 
-     * @returns Promise<Response>
+     * @returns Promise<HttpResponse>
      */
     static async get(url: string) {
         return new Promise<HttpResponse>((resolve) => {
@@ -209,7 +209,7 @@ export class HttpUtil {
      * post请求
      * @param url 请求地址
      * @param data 请求数据, 'a=1&b=2&c=3' 或者 {a:1, b:2, c:3}
-     * @returns Promise<Response>
+     * @returns Promise<HttpResponse>
      */
     static async post(url: string, data: string | object) {
         return new Promise<HttpResponse>((resolve) => {
@@ -221,7 +221,7 @@ export class HttpUtil {
      * 文件上传
      * @param url 请求地址
      * @param file 文件
-     * @returns Promise<Response>
+     * @returns Promise<HttpResponse>
      */
     static async upload(url: string, file: File) {
         return new Promise<HttpResponse>((resolve) => {
@@ -233,7 +233,7 @@ export class HttpUtil {
      * 下载文件
      * @param url 请求地址
      * @param responseType 返回类型 
-     * @returns Promise<Response>
+     * @returns Promise<HttpResponse>
      */
     static async download(url: string, responseType: XMLHttpRequestResponseType = "text") {
         return new Promise<HttpResponse>((resolve) => {

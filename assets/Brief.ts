@@ -10,6 +10,7 @@ import { CameraFollow } from "./expand/CameraFollow";
 import { SkinManager } from "./expand/SkinSprite";
 import { GuideManager } from "./guide/GuideManager";
 import { DataTarget } from "./common/DataTarget";
+import { ViewTransition } from './common/ViewTransition';
 
 /** brief 模块便捷访问入口 */
 export class brief {
@@ -22,6 +23,11 @@ export class brief {
      * brief.view.close('home'); // 关闭视图
      */
     static view: ViewManager;
+
+    /**
+     * 视图过渡
+     */
+    static viewTransition: ViewTransition;
 
     /** 
      * 音频管理
